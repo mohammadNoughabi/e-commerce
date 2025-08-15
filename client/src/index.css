@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+:root {
+  /* Color palette */
+  --black: #000000;
+  --dark-blue: #14213d;
+  --accent-orange: #fca311;
+  --light-gray: #e5e5e5;
+  --white: #ffffff;
+}
+
+/* Text color classes */
+.text-black {
+  color: var(--black);
+}
+.text-dark-blue {
+  color: var(--dark-blue);
+}
+.text-accent-orange {
+  color: var(--accent-orange);
+}
+.text-light-gray {
+  color: var(--light-gray);
+}
+.text-white {
+  color: var(--white);
+}
+
+/* Background color classes */
+.bg-black {
+  background-color: var(--black);
+}
+.bg-dark-blue {
+  background-color: var(--dark-blue);
+}
+.bg-accent-orange {
+  background-color: var(--accent-orange);
+}
+.bg-light-gray {
+  background-color: var(--light-gray);
+}
+.bg-white {
+  background-color: var(--white);
+}
+
+/* Border color classes */
+.border-black {
+  border-color: var(--black);
+}
+.border-dark-blue {
+  border-color: var(--dark-blue);
+}
+.border-accent-orange {
+  border-color: var(--accent-orange);
+}
+.border-light-gray {
+  border-color: var(--light-gray);
+}
+.border-white {
+  border-color: var(--white);
+}
+
+/* Utility classes for common combinations */
+.primary-theme {
+  color: var(--white);
+  background-color: var(--dark-blue);
+}
+
+.accent-theme {
+  color: var(--dark-blue);
+  background-color: var(--accent-orange);
+}
+
+.light-theme {
+  color: var(--black);
+  background-color: var(--light-gray);
+}
+
+.dark-theme {
+  color: var(--light-gray);
+  background-color: var(--black);
+}
