@@ -1,18 +1,29 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeLink, setActiveLink] = useState("/");
   const navigate = useNavigate();
+  const location = useLocation();
+
+  let { isAuthenticated, userRole } = useSelector((state) => state.auth);
 
   let navLinks = [
     { text: "Home", path: "/" },
     { text: "Shop", path: "/shop" },
     { text: "Blog", path: "/blog" },
     { text: "About", path: "/about" },
-    { text: "Auth", path: "/auth" },
-  ];
+    !isAuthenticated && { text: "Auth", path: "/auth" },
+    isAuthenticated && { text: "Profile", path: "/profile" },
+    isAuthenticated &&
+      userRole === "admin" && { text: "Dashboard", path: "/dashboard" },
+  ].filter(Boolean); // remove false/null entries
+
+  useEffect(() => {
+    setActiveLink(location.pathname);
+  }, [location.pathname]);
 
   const handleLinkClick = (path) => {
     setActiveLink(path);
@@ -24,9 +35,12 @@ const Navbar = () => {
       <nav className="bg-slate-900 shadow-lg relative z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Logo/Brand with hover animation */}
+            {/* Logo */}
             <div className="flex-shrink-0">
-              <span className="text-white font-bold text-xl hover:text-orange-400 transition-colors duration-300 cursor-pointer">
+              <span
+                onClick={() => navigate("/")}
+                className="text-white font-bold text-xl hover:text-orange-400 transition-colors duration-300 cursor-pointer"
+              >
                 E-Commerce
               </span>
             </div>
@@ -53,7 +67,7 @@ const Navbar = () => {
               </div>
             </div>
 
-            {/* Mobile menu button with rotation animation */}
+            {/* Mobile menu button */}
             <div className="md:hidden">
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -97,7 +111,7 @@ const Navbar = () => {
         onClick={() => setIsMenuOpen(false)}
       />
 
-      {/* Mobile Navigation Menu - Slides from right */}
+      {/* Mobile Navigation Menu */}
       <div
         className={`fixed top-0 right-0 h-full max-w-full w-64 bg-slate-900 shadow-2xl z-50 transform transition-transform duration-300 ease-in-out md:hidden ${
           isMenuOpen ? "translate-x-0" : "translate-x-full"
@@ -127,7 +141,7 @@ const Navbar = () => {
             </button>
           </div>
 
-          {/* Mobile menu items with staggered animation */}
+          {/* Mobile menu items */}
           <div className="flex-1 px-4 py-6 space-y-2">
             {navLinks.map((link, index) => (
               <button
@@ -154,7 +168,7 @@ const Navbar = () => {
             ))}
           </div>
 
-          {/* Mobile menu footer */}
+          {/* Footer */}
           <div className="p-4 border-t border-slate-700">
             <div className="text-center text-gray-400 text-sm">
               © 2024 E-Commerce

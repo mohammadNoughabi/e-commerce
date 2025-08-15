@@ -1,14 +1,24 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "../../api/api";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import {
+  loginSuccess,
+  loginFailure,
+  setLoading,
+} from "../../store/auth/authSlice";
 
 const Auth = () => {
-  const [activeForm, setActiveForm] = useState("login"); // 'login', 'register', 'forgot'
+  const [activeForm, setActiveForm] = useState("login");
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     confirmPassword: "",
   });
-  const apiBase = import.meta.env.VITE_API_BASE;
+
+  const { isLoading } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -18,60 +28,73 @@ const Auth = () => {
     }));
   };
 
+  const validateFields = () => {
+    if (!formData.email) return "Email is required.";
+    if (
+      (activeForm === "login" || activeForm === "register") &&
+      !formData.password
+    )
+      return "Password is required.";
+    if (activeForm === "register") {
+      if (!formData.confirmPassword) return "Confirm Password is required.";
+      if (formData.password !== formData.confirmPassword)
+        return "Passwords do not match.";
+    }
+    return null;
+  };
+
+  const handleAuthSuccess = async () => {
+    try {
+      // Fetch fresh user data from token
+      const res = await api.get("/api/auth/validate-token");
+      dispatch(
+        loginSuccess({
+          userId: res.data.userId,
+          userRole: res.data.userRole,
+        })
+      );
+      navigate("/profile");
+    } catch (err) {
+      dispatch(loginFailure(err.response?.data?.message || "Auth failed"));
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const errorMsg = validateFields();
+    if (errorMsg) {
+      alert(errorMsg);
+      return;
+    }
+
     try {
+      dispatch(setLoading());
+
       if (activeForm === "login") {
-        if (!formData.email || !formData.password) {
-          alert("Please fill in all fields");
-          return;
-        }
-
-        const response = await axios.post(`${apiBase}/api/auth/login`, {
+        await api.post("/api/auth/login", {
           email: formData.email,
           password: formData.password,
         });
-
-        console.log(response)
-        
       } else if (activeForm === "register") {
-        if (
-          !formData.email ||
-          !formData.password ||
-          !formData.confirmPassword
-        ) {
-          alert("Please fill in all fields");
-          return;
-        }
-        if (formData.password !== formData.confirmPassword) {
-          alert("Passwords do not match");
-          return;
-        }
-
-        const response = await axios.post(`${apiBase}/api/auth/register`, {
+        await api.post("/api/auth/register", {
           email: formData.email,
           password: formData.password,
         });
-
-        console.log(response);
       } else if (activeForm === "forgot") {
-        if (!formData.email) {
-          alert("Please enter your email");
-          return;
-        }
-
-        const response = await axios.post(
-          `${apiBase}/api/auth/forgot-password`,
-          {
-            email: formData.email,
-          }
-        );
-
-        console.log(response);
+        await api.post("/api/auth/forgot-password", {
+          email: formData.email,
+        });
+        alert("Password reset link sent to your email.");
+        return;
       }
+
+      await handleAuthSuccess();
     } catch (error) {
       console.error("Error:", error.response?.data || error.message);
+      dispatch(
+        loginFailure(error.response?.data?.message || "Something went wrong")
+      );
       alert(error.response?.data?.message || "Something went wrong");
     }
   };
@@ -80,7 +103,7 @@ const Auth = () => {
     <div className="min-h-screen bg-light-gray flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          {/* Header with form switcher */}
+          {/* Header */}
           <div className="bg-dark-blue p-6">
             <h2 className="text-white text-2xl font-bold text-center">
               {activeForm === "login" && "Login"}
@@ -89,10 +112,10 @@ const Auth = () => {
             </h2>
           </div>
 
-          {/* Form content */}
+          {/* Form */}
           <div className="p-6">
             <form onSubmit={handleSubmit}>
-              {/* Email field (all forms) */}
+              {/* Email */}
               <div className="mb-4">
                 <label
                   htmlFor="email"
@@ -108,10 +131,11 @@ const Auth = () => {
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-light-gray rounded-md focus:outline-none focus:ring-2 focus:ring-accent-orange"
                   required
+                  autoComplete="email"
                 />
               </div>
 
-              {/* Password field (login & register) */}
+              {/* Password */}
               {(activeForm === "login" || activeForm === "register") && (
                 <div className="mb-4">
                   <label
@@ -128,12 +152,12 @@ const Auth = () => {
                     onChange={handleChange}
                     className="w-full px-3 py-2 border border-light-gray rounded-md focus:outline-none focus:ring-2 focus:ring-accent-orange"
                     required
-                    autoComplete="password"
+                    autoComplete="current-password"
                   />
                 </div>
               )}
 
-              {/* Confirm Password (register only) */}
+              {/* Confirm Password */}
               {activeForm === "register" && (
                 <div className="mb-6">
                   <label
@@ -150,23 +174,28 @@ const Auth = () => {
                     onChange={handleChange}
                     className="w-full px-3 py-2 border border-light-gray rounded-md focus:outline-none focus:ring-2 focus:ring-accent-orange"
                     required
-                    autoComplete="current-password"
+                    autoComplete="password"
                   />
                 </div>
               )}
 
-              {/* Submit button */}
+              {/* Submit */}
               <button
                 type="submit"
-                className="w-full bg-accent-orange text-dark-blue font-bold py-2 px-4 rounded-md hover:bg-opacity-90 transition duration-200 cursor-pointer"
+                disabled={isLoading}
+                className="w-full bg-accent-orange text-dark-blue font-bold py-2 px-4 rounded-md hover:bg-opacity-90 transition duration-200 cursor-pointer disabled:opacity-50"
               >
-                {activeForm === "login" && "Login"}
-                {activeForm === "register" && "Register"}
-                {activeForm === "forgot" && "Send Reset Link"}
+                {isLoading
+                  ? "Please wait..."
+                  : activeForm === "login"
+                  ? "Login"
+                  : activeForm === "register"
+                  ? "Register"
+                  : "Send Reset Link"}
               </button>
             </form>
 
-            {/* Form switcher links */}
+            {/* Links */}
             <div className="mt-4 text-center text-sm">
               {activeForm !== "login" && (
                 <p className="text-dark-blue">
@@ -192,7 +221,7 @@ const Auth = () => {
                 </p>
               )}
 
-              {activeForm !== "forgot" && activeForm === "login" && (
+              {activeForm === "login" && (
                 <p className="text-dark-blue mt-2">
                   <button
                     onClick={() => setActiveForm("forgot")}
