@@ -9,7 +9,6 @@ import { setUsers } from "../../store/user/userSlice";
 import { setCategories } from "../../store/category/categorySlice";
 import { setProducts } from "../../store/product/productSlice";
 import { setBlogs } from "../../store/blog/blogSlice";
-import api from "../../api/api";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -26,16 +25,7 @@ const App = () => {
     }
   };
 
-  const fetchUsers = async () => {
-    try {
-      let response = await api.get("/api/user");
-      if (response.status === 200) {
-        dispatch(setUsers(response.data.users));
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
+ 
 
   const fetchCategories = async () => {
     try {
@@ -72,7 +62,6 @@ const App = () => {
 
   useEffect(() => {
     validateToken();
-    fetchUsers();
     fetchCategories();
     fetchProducts();
     fetchBlogs();
@@ -80,9 +69,13 @@ const App = () => {
 
   return (
     <div>
-      <Navbar />
+      <div className="sticky top-0">
+        <Navbar />
+      </div>
       <AppRoutes />
-      <Footer />
+      <div className="relative bottom-0">
+        <Footer />
+      </div>
     </div>
   );
 };
