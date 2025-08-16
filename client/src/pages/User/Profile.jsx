@@ -47,7 +47,7 @@ const Profile = () => {
         <button
           onClick={logoutUser}
           disabled={loading}
-          className={`w-full py-3 rounded-lg font-semibold text-dark-blue bg-accent-orange 
+          className={`w-full py-3 rounded-lg font-semibold text-dark-blue bg-accent-orange cursor-pointer
           hover:bg-opacity-90 transition-all duration-200 shadow-md 
           ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
         >

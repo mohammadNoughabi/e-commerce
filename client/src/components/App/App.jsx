@@ -4,26 +4,78 @@ import Footer from "../Footer/Footer";
 import api from "../../api/api";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { loginSuccess, loginFailure, logout } from "../../store/auth/authSlice";
+import { login, logout } from "../../store/auth/authSlice";
+import { setUsers } from "../../store/user/userSlice";
+import { setCategories } from "../../store/category/categorySlice";
+import { setProducts } from "../../store/product/productSlice";
+import { setBlogs } from "../../store/blog/blogSlice";
+import api from "../../api/api";
 
 const App = () => {
   const dispatch = useDispatch();
 
-  const { userId, userRole } = useSelector((state) => state.auth);
-  console.log("userId:" + userId + "/", "userRole :" + userRole);
-
   const validateToken = async () => {
     try {
       const response = await api.get("/api/auth/validate-token");
-      let { userId, userRole } = response.data;
-      dispatch(loginSuccess({ userId, userRole }));
+      const { userId, userRole } = response.data;
+      dispatch(login({ userId, userRole }));
     } catch (error) {
-      dispatch(loginFailure("Error in validating token:", error.message));
+      if (error.response?.status === 401) {
+        dispatch(logout());
+      }
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      let response = await api.get("/api/user");
+      if (response.status === 200) {
+        dispatch(setUsers(response.data.users));
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      let response = await api.get("/api/category");
+      if (response.status === 200) {
+        dispatch(setCategories(response.data.categories));
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const fetchProducts = async () => {
+    try {
+      let response = await api.get("/api/product");
+      if (response.status === 200) {
+        dispatch(setProducts(response.data.products));
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const fetchBlogs = async () => {
+    try {
+      let response = await api.get("/api/blog");
+      if (response.status === 200) {
+        dispatch(setBlogs(response.data.blogs));
+      }
+    } catch (error) {
+      console.log(error);
     }
   };
 
   useEffect(() => {
     validateToken();
+    fetchUsers();
+    fetchCategories();
+    fetchProducts();
+    fetchBlogs();
   }, [dispatch]);
 
   return (
