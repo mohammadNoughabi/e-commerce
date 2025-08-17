@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import api from "../../api/api";
 import { login as loginAction } from "../../store/auth/authSlice";
+import { openModal, closeModal } from "../../store/Modal/modalSlice";
 
 const Auth = () => {
   const dispatch = useDispatch();
@@ -22,6 +23,37 @@ const Auth = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+  };
+
+  const showErrorModal = (errorMessage) => {
+    dispatch(
+      openModal({
+        title: "Error",
+        message: errorMessage,
+        buttons: [
+          {
+            text: "OK",
+            color: "accent-orange",
+          },
+        ],
+      })
+    );
+  };
+
+  const showSuccessModal = (message, callback) => {
+    dispatch(
+      openModal({
+        title: "Success",
+        message: message,
+        buttons: [
+          {
+            text: "Continue",
+            color: "dark-blue",
+            onClick: callback,
+          },
+        ],
+      })
+    );
   };
 
   // -------------------- Login --------------------
@@ -44,10 +76,10 @@ const Auth = () => {
             userRole: validateRes.data.userRole,
           })
         );
-        navigate("/");
+        showSuccessModal("Login successful!", () => navigate("/profile"));
       }
     } catch (err) {
-      alert(err.response?.data?.message || "Login failed");
+      showErrorModal(err.response?.data?.message || "Login failed");
     } finally {
       setLoading(false);
     }
@@ -216,19 +248,22 @@ const Auth = () => {
             )}
 
             {/* OTP (register step2 or forgotPass step2) */}
-            {(step === 2 && (activeForm === "register" || activeForm === "forgotPass")) && (
-              <div className="mb-6">
-                <label className="block text-dark-blue mb-2">Enter Code Sent to your Email :</label>
-                <input
-                  type="text"
-                  name="otp"
-                  value={formData.otp}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-light-gray rounded-md focus:ring-2 focus:ring-accent-orange"
-                  required
-                />
-              </div>
-            )}
+            {step === 2 &&
+              (activeForm === "register" || activeForm === "forgotPass") && (
+                <div className="mb-6">
+                  <label className="block text-dark-blue mb-2">
+                    Enter Code Sent to your Email :
+                  </label>
+                  <input
+                    type="text"
+                    name="otp"
+                    value={formData.otp}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-light-gray rounded-md focus:ring-2 focus:ring-accent-orange"
+                    required
+                  />
+                </div>
+              )}
 
             {/* Submit */}
             <button
@@ -237,12 +272,17 @@ const Auth = () => {
               disabled={loading}
               className="w-full bg-accent-orange text-dark-blue font-bold py-2 px-4 rounded-md hover:bg-opacity-90 transition-colors cursor-pointer"
             >
-              {loading ? "Please wait..." : 
-                activeForm === "login"
-                  ? "Login"
-                  : activeForm === "register"
-                  ? step === 1 ? "Send OTP" : "Verify & Register"
-                  : step === 1 ? "Send code to email" : "Verify OTP"}
+              {loading
+                ? "Please wait..."
+                : activeForm === "login"
+                ? "Login"
+                : activeForm === "register"
+                ? step === 1
+                  ? "Send OTP"
+                  : "Verify & Register"
+                : step === 1
+                ? "Send code to email"
+                : "Verify OTP"}
             </button>
 
             {activeForm === "login" && (

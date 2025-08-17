@@ -5,13 +5,14 @@ import api from "../../api/api";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { login, logout } from "../../store/auth/authSlice";
-import { setUsers } from "../../store/user/userSlice";
 import { setCategories } from "../../store/category/categorySlice";
 import { setProducts } from "../../store/product/productSlice";
 import { setBlogs } from "../../store/blog/blogSlice";
+import Modal from "../Modal/Modal";
 
 const App = () => {
   const dispatch = useDispatch();
+  const {isAuthenticated} = useSelector((state) => state.auth);
 
   const validateToken = async () => {
     try {
@@ -24,8 +25,6 @@ const App = () => {
       }
     }
   };
-
- 
 
   const fetchCategories = async () => {
     try {
@@ -65,10 +64,14 @@ const App = () => {
     fetchCategories();
     fetchProducts();
     fetchBlogs();
-  }, [dispatch]);
+    if (isAuthenticated) {
+      validateToken();
+    }
+  }, [isAuthenticated]);
 
   return (
     <div>
+      <Modal />
       <div className="sticky top-0">
         <Navbar />
       </div>

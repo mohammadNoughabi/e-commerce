@@ -1,9 +1,8 @@
 const Category = require("../models/Category")
 
-
-
-
-exports.create = async (req ,res) => {}
+exports.create = async (req ,res) => {
+  
+}
 
 exports.read = async (req, res) => {
   try {

@@ -3,6 +3,7 @@ import { logout } from "../../store/auth/authSlice";
 import api from "../../api/api";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { openModal, closeModal } from "../../store/Modal/modalSlice";
 
 const Profile = () => {
   const dispatch = useDispatch();
@@ -10,15 +11,46 @@ const Profile = () => {
   const { userId, userRole } = useSelector((state) => state.auth);
   const [loading, setLoading] = useState(false);
 
+  const showErrorModal = (errorMessage) => {
+    dispatch(
+      openModal({
+        title: "Error",
+        message: errorMessage,
+        buttons: [
+          {
+            text: "OK",
+            color: "accent-orange",
+          },
+        ],
+      })
+    );
+  };
+
+  const showSuccessModal = (message, callback) => {
+    dispatch(
+      openModal({
+        title: "Success",
+        message: message,
+        buttons: [
+          {
+            text: "Continue",
+            color: "dark-blue",
+            onClick: callback,
+          },
+        ],
+      })
+    );
+  };
+
   const logoutUser = async () => {
     try {
       setLoading(true);
       await api.post("/api/auth/logout"); // cookie cleared on server
       dispatch(logout()); // Redux state reset
-      navigate("/auth"); // redirect to login/auth page
+      showSuccessModal("Logged out successfully." , navigate("/auth"))
     } catch (error) {
       console.error("Logout error:", error.response?.data || error.message);
-      alert("Failed to log out. Please try again.");
+      showErrorModal("Failed to log out. Please try again.")
     } finally {
       setLoading(false);
     }

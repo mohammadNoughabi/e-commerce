@@ -4,6 +4,7 @@ import authReducer from "./auth/authSlice";
 import blogReducer from "./blog/blogSlice";
 import categoryReducer from "./category/categorySlice";
 import productReducer from "./product/productSlice";
+import modalReducer from "./Modal/modalSlice";
 
 export default configureStore({
   reducer: {
@@ -12,5 +13,6 @@ export default configureStore({
     blog: blogReducer,
     category: categoryReducer,
     product: productReducer,
+    modal: modalReducer,
   },
 });
