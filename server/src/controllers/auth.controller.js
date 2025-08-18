@@ -10,7 +10,7 @@ exports.validateToken = async (req, res) => {
   const token = req.cookies.token;
 
   if (!token) {
-    return res.status(401).json({ message: "No token provided" });
+    return res.status(200).json({ userId: null, userRole: null });
   }
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -207,7 +207,7 @@ exports.login = async (req, res) => {
       sameSite: "strict",
       maxAge: 24 * 60 * 60 * 1000,
     });
-    return res.status(200).json({ message: "Login successfull" , token});
+    return res.status(200).json({ message: "Login successfull", token });
   } catch (error) {
     console.error("Login error:", error);
     return res.status(500).json({

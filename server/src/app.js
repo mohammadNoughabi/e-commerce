@@ -25,7 +25,6 @@ app.use(
     methods: ["GET", "POST", "PUT", "DELETE"],
   })
 );
-
 app.use(routes);
 
 const port = process.env.PORT || 3000;

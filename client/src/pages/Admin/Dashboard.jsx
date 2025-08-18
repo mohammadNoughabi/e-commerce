@@ -14,6 +14,7 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import api from "../../api/api";
 import { setUsers } from "../../store/user/userSlice";
+import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("users");
@@ -24,6 +25,7 @@ export default function Dashboard() {
   const { products } = useSelector((state) => state.product);
   const { categories } = useSelector((state) => state.category);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const tabs = [
     { key: "users", label: "Users", icon: <FaUser /> },
@@ -140,7 +142,18 @@ export default function Dashboard() {
                       <button className="flex items-center gap-1 px-3 py-1 rounded-lg bg-accent-orange text-dark-blue cursor-pointer hover:bg-dark-blue hover:text-white transition">
                         <FaEye /> Show
                       </button>
-                      <button className="flex items-center gap-1 px-3 py-1 rounded-lg bg-dark-blue cursor-pointer text-white hover:bg-accent-orange hover:text-dark-blue transition">
+                      <button
+                        onClick={() => {
+                          if (type === "products") {
+                            navigate(`/product/${item._id}`);
+                          } else if (type === "blogs") {
+                            navigate(`/blog/${item._id}`);
+                          } else if (type === "categories") {
+                            navigate(`/category/${item._id}`);
+                          }
+                        }}
+                        className="flex items-center gap-1 px-3 py-1 rounded-lg bg-dark-blue cursor-pointer text-white hover:bg-accent-orange hover:text-dark-blue transition"
+                      >
                         <FaEdit /> Edit
                       </button>
                     </td>
@@ -227,7 +240,18 @@ export default function Dashboard() {
           <h2 className="text-2xl font-bold capitalize text-dark-blue">
             {activeTab}
           </h2>
-          <button className="flex items-center gap-2 bg-accent-orange text-dark-blue px-4 py-2 rounded-lg font-medium cursor-pointer hover:bg-dark-blue hover:text-white transition">
+          <button
+            onClick={() => {
+              if (activeTab === "products") {
+                navigate("/product/create");
+              } else if (activeTab === "blogs") {
+                navigate("/blog/create");
+              } else if (activeTab === "categories") {
+                navigate("/category/create");
+              }
+            }}
+            className="flex items-center gap-2 bg-accent-orange text-dark-blue px-4 py-2 rounded-lg font-medium cursor-pointer hover:bg-dark-blue hover:text-white transition"
+          >
             <FaPlus /> Create New
           </button>
         </div>

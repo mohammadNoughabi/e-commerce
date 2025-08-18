@@ -3,11 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import api from "../../api/api";
 import { login as loginAction } from "../../store/auth/authSlice";
-import { openModal, closeModal } from "../../store/Modal/modalSlice";
+import useModal from "../../hooks/useModal";
 
 const Auth = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { showModal } = useModal();
 
   const [activeForm, setActiveForm] = useState("login"); // login | register | forgotPass
   const [step, setStep] = useState(1); // for multi-step flows
@@ -25,37 +26,6 @@ const Auth = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-  const showErrorModal = (errorMessage) => {
-    dispatch(
-      openModal({
-        title: "Error",
-        message: errorMessage,
-        buttons: [
-          {
-            text: "OK",
-            color: "accent-orange",
-          },
-        ],
-      })
-    );
-  };
-
-  const showSuccessModal = (message, callback) => {
-    dispatch(
-      openModal({
-        title: "Success",
-        message: message,
-        buttons: [
-          {
-            text: "Continue",
-            color: "dark-blue",
-            onClick: callback,
-          },
-        ],
-      })
-    );
-  };
-
   // -------------------- Login --------------------
   const handleLogin = async () => {
     try {
@@ -65,21 +35,26 @@ const Auth = () => {
         password: formData.password,
       });
 
-      // Backend returns token
       if (res.data.token) {
-        // validate token to get userId + role
         const validateRes = await api.get("/api/auth/validate-token");
-
         dispatch(
           loginAction({
             userId: validateRes.data.userId,
             userRole: validateRes.data.userRole,
           })
         );
-        showSuccessModal("Login successful!", () => navigate("/profile"));
+        showModal({
+          title: "Login Success",
+          message: "You are logged in now!",
+          buttons: [{ text: "ok", className: "primary-theme" }],
+        });
       }
     } catch (err) {
-      showErrorModal(err.response?.data?.message || "Login failed");
+      showModal({
+        title: "Login Failed",
+        message: "Try again to login",
+        buttons: [{ text: "ok", className: "primary-theme" }],
+      });
     } finally {
       setLoading(false);
     }
@@ -90,24 +65,27 @@ const Auth = () => {
     try {
       if (step === 1) {
         if (formData.password !== formData.repeatPassword) {
-          return alert("Passwords do not match");
+          return showModal({
+            title: "Register Failed",
+            message: "passwords are not same!",
+            buttons: [{ text: "ok", className: "primary-theme" }],
+          });
         }
-
-        // send OTP to email
         const res = await api.post("/api/auth/generate-otp", {
           email: formData.email,
         });
-        alert(res.data.message);
-        setStep(2);
+        showModal({
+          title: "Email Sent",
+          message: res.data.message || "You are logged in now!",
+          buttons: [{ text: "ok", className: "primary-theme" }],
+        });
       } else if (step === 2) {
-        // verify OTP
         const verify = await api.post("/api/auth/verify-otp", {
           email: formData.email,
           otp: formData.otp,
         });
 
         if (verify.data.verified) {
-          // now create user
           const reg = await api.post("/api/auth/register", {
             email: formData.email,
             password: formData.password,
@@ -128,7 +106,11 @@ const Auth = () => {
         }
       }
     } catch (err) {
-      alert(err.response?.data?.message || "Registration failed");
+      showModal({
+        title: "Server error",
+        message: err.message || "Something went wrong.",
+        buttons: [{ text: "ok", className: "primary-theme" }],
+      });
     }
   };
 
@@ -136,30 +118,40 @@ const Auth = () => {
   const handleForgotPass = async () => {
     try {
       if (step === 1) {
-        // request OTP
         const res = await api.post("/api/auth/generate-otp", {
           email: formData.email,
         });
-        alert(res.data.message);
+        showModal({
+          title: "Email sent",
+          message: res.data.message || "Email sent successfully",
+          buttons: [{ text: "ok", className: "primary-theme" }],
+        });
         setStep(2);
       } else if (step === 2) {
-        // verify OTP
         const verify = await api.post("/api/auth/verify-otp", {
           email: formData.email,
           otp: formData.otp,
         });
         if (verify.data.verified) {
-          alert("OTP verified. Implement reset password form next.");
-          // here you would show new password fields and call /change-pass
+          showModal({
+            title: "Success",
+            message: res.data.message || "otp verified",
+            buttons: [{ text: "ok", className: "primary-theme" }],
+          });
         }
       }
     } catch (err) {
-      alert(err.response?.data?.message || "Reset failed");
+       showModal({
+        title: "Server error",
+        message: err.response?.data?.message || "Something went wrong",
+        buttons: [{ text: "ok", className: "primary-theme" }],
+      });
     }
   };
 
   // -------------------- Handle Submit --------------------
-  const handleSubmit = () => {
+  const handleSubmit = (e) => {
+    e.preventDefault(); // prevent page reload
     if (activeForm === "login") handleLogin();
     if (activeForm === "register") handleRegister();
     if (activeForm === "forgotPass") handleForgotPass();
@@ -191,15 +183,15 @@ const Auth = () => {
             ))}
           </div>
 
-          {/* Form content */}
-          <div className="p-6">
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="p-6">
             <h2 className="text-2xl font-bold text-dark-blue mb-6 text-center">
               {activeForm === "login" && "Welcome Back"}
               {activeForm === "register" && "Create Account"}
               {activeForm === "forgotPass" && "Reset Password"}
             </h2>
 
-            {/* Email field */}
+            {/* Email */}
             <div className="mb-4">
               <label htmlFor="email" className="block text-dark-blue mb-2">
                 Email Address
@@ -207,6 +199,7 @@ const Auth = () => {
               <input
                 type="email"
                 name="email"
+                autoComplete="username"
                 value={formData.email}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-light-gray rounded-md focus:ring-2 focus:ring-accent-orange"
@@ -214,7 +207,7 @@ const Auth = () => {
               />
             </div>
 
-            {/* Password (login/register step1) */}
+            {/* Password (login or register step 1) */}
             {(activeForm === "login" ||
               (activeForm === "register" && step === 1)) && (
               <div className="mb-4">
@@ -222,6 +215,7 @@ const Auth = () => {
                 <input
                   type="password"
                   name="password"
+                  autoComplete="current-password"
                   value={formData.password}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-light-gray rounded-md focus:ring-2 focus:ring-accent-orange"
@@ -257,6 +251,7 @@ const Auth = () => {
                   <input
                     type="text"
                     name="otp"
+                    autoComplete="one-time-code"
                     value={formData.otp}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-light-gray rounded-md focus:ring-2 focus:ring-accent-orange"
@@ -267,8 +262,7 @@ const Auth = () => {
 
             {/* Submit */}
             <button
-              type="button"
-              onClick={handleSubmit}
+              type="submit"
               disabled={loading}
               className="w-full bg-accent-orange text-dark-blue font-bold py-2 px-4 rounded-md hover:bg-opacity-90 transition-colors cursor-pointer"
             >
@@ -285,6 +279,7 @@ const Auth = () => {
                 : "Verify OTP"}
             </button>
 
+            {/* Forgot password shortcut */}
             {activeForm === "login" && (
               <div className="mt-4 text-center">
                 <button
@@ -299,7 +294,7 @@ const Auth = () => {
                 </button>
               </div>
             )}
-          </div>
+          </form>
         </div>
       </div>
     </div>
