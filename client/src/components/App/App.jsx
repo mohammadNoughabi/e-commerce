@@ -8,21 +8,29 @@ import { login, logout } from "../../store/auth/authSlice";
 import { setCategories } from "../../store/category/categorySlice";
 import { setProducts } from "../../store/product/productSlice";
 import { setBlogs } from "../../store/blog/blogSlice";
-import Modal from "../Modal/Modal";
+import useModal from "../../hooks/useModal";
 
 const App = () => {
   const dispatch = useDispatch();
-  const {isAuthenticated} = useSelector((state) => state.auth);
+  const { showModal } = useModal();
+  const { isAuthenticated } = useSelector((state) => state.auth);
 
-  const validateToken = async () => {
+  const verifyAuth = async () => {
     try {
-      const response = await api.get("/api/auth/validate-token");
-      const { userId, userRole } = response.data;
-      dispatch(login({ userId, userRole }));
-    } catch (error) {
-      if (error.response?.status === 401) {
-        dispatch(logout());
+      const response = await api.get("/api/auth/verify", {
+        credentials: "include", 
+      });
+
+      if (response.data.isAuthenticated) {
+        dispatch(
+          login({
+            userId: response.data.userId,
+            userRole: response.data.userRole,
+          })
+        );
       }
+    } catch (error) {
+      dispatch(logout());
     }
   };
 
@@ -60,18 +68,14 @@ const App = () => {
   };
 
   useEffect(() => {
-    validateToken();
+    verifyAuth();
     fetchCategories();
     fetchProducts();
     fetchBlogs();
-    if (isAuthenticated) {
-      validateToken();
-    }
-  }, [isAuthenticated]);
+  }, [dispatch, isAuthenticated]);
 
   return (
     <div>
-      <Modal />
       <div className="sticky top-0">
         <Navbar />
       </div>

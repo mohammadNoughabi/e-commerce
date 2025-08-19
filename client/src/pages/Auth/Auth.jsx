@@ -35,20 +35,18 @@ const Auth = () => {
         password: formData.password,
       });
 
-      if (res.data.token) {
-        const validateRes = await api.get("/api/auth/validate-token");
-        dispatch(
-          loginAction({
-            userId: validateRes.data.userId,
-            userRole: validateRes.data.userRole,
-          })
-        );
-        showModal({
-          title: "Login Success",
-          message: "You are logged in now!",
-          buttons: [{ text: "ok", className: "primary-theme" }],
-        });
-      }
+      dispatch(
+        loginAction({
+          userId: res.data.userId,
+          userRole: res.data.userRole,
+        })
+      );
+      showModal({
+        title: "Login Success",
+        message: "You are logged in now!",
+        buttons: [{ text: "ok", className: "primary-theme" }],
+      });
+      navigate("/profile")
     } catch (err) {
       showModal({
         title: "Login Failed",
@@ -74,6 +72,7 @@ const Auth = () => {
         const res = await api.post("/api/auth/generate-otp", {
           email: formData.email,
         });
+        setStep(2);
         showModal({
           title: "Email Sent",
           message: res.data.message || "You are logged in now!",
@@ -141,7 +140,7 @@ const Auth = () => {
         }
       }
     } catch (err) {
-       showModal({
+      showModal({
         title: "Server error",
         message: err.response?.data?.message || "Something went wrong",
         buttons: [{ text: "ok", className: "primary-theme" }],

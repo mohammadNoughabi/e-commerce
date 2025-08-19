@@ -5,19 +5,30 @@ const sendMail = require("../utils/sendMail");
 const generateOtp = require("../utils/generateOTP");
 require("dotenv").config();
 
-// -------------------- Validate Token --------------------
-exports.validateToken = async (req, res) => {
-  const token = req.cookies.token;
-
-  if (!token) {
-    return res.status(200).json({ userId: null, userRole: null });
-  }
+exports.verifyAuth = async (req, res) => {
   try {
+    // The cookie-parser middleware automatically parses cookies
+    const token = req.cookies.token;
+
+    if (!token) {
+      return res.json({ isAuthenticated: false });
+    }
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    return res.json({ userId: decoded.userId, userRole: decoded.userRole });
+
+    // Optionally verify user still exists in DB
+    const user = await User.findById(decoded.userId);
+    if (!user) {
+      return res.json({ isAuthenticated: false });
+    }
+
+    return res.json({
+      isAuthenticated: true,
+      userId: decoded.userId,
+      userRole: decoded.userRole,
+    });
   } catch (error) {
-    res.clearCookie("token");
-    return res.status(401).json({ message: "Invalid or Expired token" });
+    return res.json({ isAuthenticated: false });
   }
 };
 
@@ -203,11 +214,16 @@ exports.login = async (req, res) => {
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: true,
       sameSite: "strict",
       maxAge: 24 * 60 * 60 * 1000,
     });
-    return res.status(200).json({ message: "Login successfull", token });
+    return res.status(200).json({
+      message: "Login successfull",
+      token,
+      userId: user._id,
+      userRole: user.role,
+    });
   } catch (error) {
     console.error("Login error:", error);
     return res.status(500).json({
@@ -222,7 +238,7 @@ exports.logout = async (req, res) => {
   try {
     res.clearCookie("token", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: true,
       sameSite: "strict",
       path: "/",
     });
