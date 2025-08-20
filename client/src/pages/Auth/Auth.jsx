@@ -3,12 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import api from "../../api/api";
 import { login as loginAction } from "../../store/auth/authSlice";
-import useModal from "../../hooks/useModal";
+import { openModal } from "../../store/Modal/modalSlice";
 
 const Auth = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { showModal } = useModal();
 
   const [activeForm, setActiveForm] = useState("login"); // login | register | forgotPass
   const [step, setStep] = useState(1); // for multi-step flows
@@ -41,18 +40,23 @@ const Auth = () => {
           userRole: res.data.userRole,
         })
       );
-      showModal({
-        title: "Login Success",
-        message: "You are logged in now!",
-        buttons: [{ text: "ok", className: "primary-theme" }],
-      });
-      navigate("/profile")
+      dispatch(
+        openModal({
+          title: "Login successfull",
+          message:
+            res.data.message || "You are already logged in to your account",
+          buttonText: "OK",
+        })
+      );
+      navigate("/profile");
     } catch (err) {
-      showModal({
-        title: "Login Failed",
-        message: "Try again to login",
-        buttons: [{ text: "ok", className: "primary-theme" }],
-      });
+      dispatch(
+        openModal({
+          title: "Login failed",
+          message: err.message || "Login failed. try again",
+          buttonText: "OK",
+        })
+      );
     } finally {
       setLoading(false);
     }
@@ -63,21 +67,25 @@ const Auth = () => {
     try {
       if (step === 1) {
         if (formData.password !== formData.repeatPassword) {
-          return showModal({
-            title: "Register Failed",
-            message: "passwords are not same!",
-            buttons: [{ text: "ok", className: "primary-theme" }],
-          });
+          dispatch(
+            openModal({
+              title: "Register failed",
+              message: "Register failed. Passwords must be match",
+              buttonText: "OK",
+            })
+          );
         }
         const res = await api.post("/api/auth/generate-otp", {
           email: formData.email,
         });
         setStep(2);
-        showModal({
-          title: "Email Sent",
-          message: res.data.message || "You are logged in now!",
-          buttons: [{ text: "ok", className: "primary-theme" }],
-        });
+        dispatch(
+          openModal({
+            title: "Request sent!",
+            message: res.data.message || `Verification code sent to ${email}`,
+            buttonText: "OK",
+          })
+        );
       } else if (step === 2) {
         const verify = await api.post("/api/auth/verify-otp", {
           email: formData.email,
@@ -85,12 +93,12 @@ const Auth = () => {
         });
 
         if (verify.data.verified) {
-          const reg = await api.post("/api/auth/register", {
+          const res = await api.post("/api/auth/register", {
             email: formData.email,
             password: formData.password,
           });
 
-          if (reg.data.token) {
+          if (res.data.token) {
             const validateRes = await api.get("/api/auth/validate-token", {
               withCredentials: true,
             });
@@ -105,55 +113,22 @@ const Auth = () => {
         }
       }
     } catch (err) {
-      showModal({
-        title: "Server error",
-        message: err.message || "Something went wrong.",
-        buttons: [{ text: "ok", className: "primary-theme" }],
-      });
+      dispatch(
+        openModal({
+          title: "Server error",
+          message: err.message || "Something went wrong",
+          buttonText: "OK",
+        })
+      );
     }
   };
 
-  // -------------------- Forgot Password --------------------
-  const handleForgotPass = async () => {
-    try {
-      if (step === 1) {
-        const res = await api.post("/api/auth/generate-otp", {
-          email: formData.email,
-        });
-        showModal({
-          title: "Email sent",
-          message: res.data.message || "Email sent successfully",
-          buttons: [{ text: "ok", className: "primary-theme" }],
-        });
-        setStep(2);
-      } else if (step === 2) {
-        const verify = await api.post("/api/auth/verify-otp", {
-          email: formData.email,
-          otp: formData.otp,
-        });
-        if (verify.data.verified) {
-          showModal({
-            title: "Success",
-            message: res.data.message || "otp verified",
-            buttons: [{ text: "ok", className: "primary-theme" }],
-          });
-        }
-      }
-    } catch (err) {
-      showModal({
-        title: "Server error",
-        message: err.response?.data?.message || "Something went wrong",
-        buttons: [{ text: "ok", className: "primary-theme" }],
-      });
-    }
-  };
 
   // -------------------- Handle Submit --------------------
   const handleSubmit = (e) => {
     e.preventDefault(); // prevent page reload
     if (activeForm === "login") handleLogin();
     if (activeForm === "register") handleRegister();
-    if (activeForm === "forgotPass") handleForgotPass();
   };
 
   return (
@@ -278,21 +253,6 @@ const Auth = () => {
                 : "Verify OTP"}
             </button>
 
-            {/* Forgot password shortcut */}
-            {activeForm === "login" && (
-              <div className="mt-4 text-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveForm("forgotPass");
-                    setStep(1);
-                  }}
-                  className="text-dark-blue hover:text-accent-orange transition-colors"
-                >
-                  Forgot your password?
-                </button>
-              </div>
-            )}
           </form>
         </div>
       </div>

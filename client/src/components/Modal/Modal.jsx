@@ -1,41 +1,53 @@
-import useModal from "../../hooks/useModal";
+import { motion, AnimatePresence } from "framer-motion";
+import { useDispatch, useSelector } from "react-redux";
+import { closeModal } from "../../store/Modal/modalSlice";
 
 const Modal = () => {
-  const { isModalOpen, hideModal, modalContent } = useModal();
-
-  if (!isModalOpen) return null;
+  const dispatch = useDispatch();
+  const { isOpen, title, message, buttonText } = useSelector(
+    (state) => state.modal
+  );
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        {modalContent.title && <h2 className="text-xl font-bold mb-4">{modalContent.title}</h2>}
-        {modalContent.message && <p className="mb-6">{modalContent.message}</p>}
-        
-        <div className="flex justify-end space-x-3">
-          {modalContent.buttons.length > 0 ? (
-            modalContent.buttons.map((button, index) => (
-              <button
-                key={index}
-                onClick={() => {
-                  button.onClick?.();
-                  hideModal();
-                }}
-                className={`px-4 py-2 rounded ${button.className || 'bg-blue-500 text-white hover:bg-blue-600'}`}
-              >
-                {button.text}
-              </button>
-            ))
-          ) : (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          className="fixed inset-0 flex items-center justify-center bg-black/50 z-50"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div
+            className="bg-white text-dark-blue rounded-2xl shadow-lg max-w-md w-full p-6 relative"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+          >
+            {/* Close Button (top right) */}
             <button
-              onClick={hideModal}
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              onClick={() => dispatch(closeModal())}
+              className="absolute top-3 right-3 text-dark-blue hover:text-accent-orange"
             >
-              Close
+              ✕
             </button>
-          )}
-        </div>
-      </div>
-    </div>
+
+            {/* Title */}
+            {title && <h2 className="text-xl font-bold mb-4">{title}</h2>}
+
+            {/* Message */}
+            {message && <p className="text-base mb-6">{message}</p>}
+
+            {/* Action Button */}
+            <button
+              onClick={() => dispatch(closeModal())}
+              className="bg-accent-orange text-dark-blue px-4 py-2 rounded-lg shadow-md hover:opacity-90"
+            >
+              {buttonText}
+            </button>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 

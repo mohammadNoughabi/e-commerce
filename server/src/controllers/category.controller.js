@@ -1,32 +1,30 @@
 const Category = require("../models/Category");
-const uploader = require("../utils/uploader");
 
 exports.create = async (req, res) => {
   try {
-    const { title, image, description } = req.body;
-    const imageFile = req.files[0];
-    if (!title) {
-      return res.status(400).json({ message: "Title is required." });
+    const { title, description } = req.body;
+    const image = req.file?.filename;
+
+    if (!title || !image || !description) {
+      return res.status(400).json({ message: "All fields are required." });
     }
+
+    const existingCategory = await Category.findOne({ title });
+    if (existingCategory) {
+      return res.status(400).json({ message: "Category already exists." });
+    }
+
     let newCategory = new Category({
       title,
       image,
       description,
     });
     await newCategory.save();
-    uploader.uploadSingle(
-      req,
-      res,
-      "image",
-      `uploads/categories/${newCategory.title}`
-    );
-    return res.status(200).json({
-      message: `Category ${newCategory.title} crated successfully`,
-      category: newCategory,
-    });
+
+    return res.status(200).json({ message: "Category created successfully" , newCategory });
   } catch (error) {
     console.log(error);
-    return res.status(500).json({ message: "Internal server error", error });
+    return res.status(500).json({ message: "Internal server error!", error });
   }
 };
 
@@ -53,4 +51,16 @@ exports.readAll = async (req, res) => {
 
 exports.update = async (req, res) => {};
 
-exports.delete = async (req, res) => {};
+exports.delete = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const category = await Category.findById(id);
+    if (!category) {
+      return res.status(404).json({message:"category not found."})
+    }
+    await Category.findByIdAndDelete(id)
+    return res.status(200).json({message:`Category deleted successfully`})
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error", error });
+  }
+};

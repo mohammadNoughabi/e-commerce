@@ -5,17 +5,20 @@ const session = require("express-session");
 const connectDB = require("./config/db");
 const routes = require("./routes/routes");
 require("dotenv").config();
+const path = require("path");
 
 const app = express();
 connectDB();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use(cookieParser());
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
     resave: false,
+    saveUninitialized: false,
   })
 );
 app.use(

@@ -1,14 +1,18 @@
 const express = require("express");
 
-const productController = require("../controllers/product.controller")
+const productController = require("../controllers/product.controller");
+const upload = require("../utils/upload");
 
 const productRoutes = express.Router();
 
-
-productRoutes.get("/" , productController.readAll);
-productRoutes.get("/:id" , productController.read);
-productRoutes.post("/" , productController.create);
-productRoutes.put("/:id" , productController.update);
-productRoutes.delete("/:id" , productController.delete);
+productRoutes.get("/", productController.readAll);
+productRoutes.get("/:id", productController.read);
+productRoutes.post(
+  "/",
+  upload.fields([{ name: "image", maxCount: 1 }, { name: "gallery" }]),
+  productController.create
+);
+productRoutes.put("/:id", productController.update);
+productRoutes.delete("/:id", productController.delete);
 
 module.exports = productRoutes;

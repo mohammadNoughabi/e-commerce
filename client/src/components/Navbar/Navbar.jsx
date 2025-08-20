@@ -12,7 +12,7 @@ const Navbar = () => {
 
   let navLinks = [
     { text: "Home", path: "/" },
-    { text: "Shop", path: "/product" },
+    { text: "Shop", path: "/shop" },
     { text: "Blog", path: "/blog" },
     { text: "About", path: "/about" },
     !isAuthenticated && { text: "Auth", path: "/auth" },

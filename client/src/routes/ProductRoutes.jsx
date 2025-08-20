@@ -1,14 +1,14 @@
 import { Route, Routes } from "react-router-dom";
+import ProductCreator from "../pages/Product/ProductCreator";
 import ProductEditor from "../pages/Product/ProductEditor";
-import Shop from "../pages/Product/Shop";
 import ProductPage from "../pages/Product/ProductPage";
 
 const ProducRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<Shop />} />
+      <Route path="/create" element={<ProductCreator />} />
+      <Route path="/edit/:id" element={<ProductEditor />} />
       <Route path="/:id" element={<ProductPage />} />
-      <Route path="/create" element={<ProductEditor />} />
     </Routes>
   );
 };

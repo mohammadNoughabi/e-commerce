@@ -7,18 +7,16 @@ import { useDispatch, useSelector } from "react-redux";
 import { login, logout } from "../../store/auth/authSlice";
 import { setCategories } from "../../store/category/categorySlice";
 import { setProducts } from "../../store/product/productSlice";
-import { setBlogs } from "../../store/blog/blogSlice";
-import useModal from "../../hooks/useModal";
+import Modal from "../Modal/Modal";
 
 const App = () => {
   const dispatch = useDispatch();
-  const { showModal } = useModal();
   const { isAuthenticated } = useSelector((state) => state.auth);
 
   const verifyAuth = async () => {
     try {
       const response = await api.get("/api/auth/verify", {
-        credentials: "include", 
+        credentials: "include",
       });
 
       if (response.data.isAuthenticated) {
@@ -56,27 +54,17 @@ const App = () => {
     }
   };
 
-  const fetchBlogs = async () => {
-    try {
-      let response = await api.get("/api/blog");
-      if (response.status === 200) {
-        dispatch(setBlogs(response.data.blogs));
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
 
   useEffect(() => {
     verifyAuth();
     fetchCategories();
     fetchProducts();
-    fetchBlogs();
   }, [dispatch, isAuthenticated]);
 
   return (
     <div>
-      <div className="sticky top-0">
+      <Modal />
+      <div className="sticky top-0 z-50">
         <Navbar />
       </div>
       <AppRoutes />

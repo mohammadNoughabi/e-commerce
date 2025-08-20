@@ -1,0 +1,37 @@
+.ql-toolbar {
+  background-color: var(--light-gray);
+  border: none !important;
+  border-bottom: 1px solid var(--light-gray) !important;
+}
+.ql-toolbar button:hover {
+  color: var(--accent-orange) !important;
+}
+.ql-toolbar .ql-picker-label:hover {
+  color: var(--accent-orange) !important;
+}
+.ql-container {
+  border: none !important;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  color: var(--dark-blue);
+}
+.ql-editor {
+  min-height: 250px;
+  padding: 1rem;
+  background-color: var(--white);
+}
+.ql-editor.ql-blank::before {
+  color: var(--light-gray);
+  font-style: italic;
+}
+.ql-toolbar .ql-stroke {
+  stroke: var(--dark-blue);
+}
+.ql-toolbar .ql-fill {
+  fill: var(--dark-blue);
+}
+.ql-toolbar .ql-active .ql-stroke {
+  stroke: var(--accent-orange);
+}
+.ql-toolbar .ql-active .ql-fill {
+  fill: var(--accent-orange);
+}
