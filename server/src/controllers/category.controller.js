@@ -1,4 +1,5 @@
 const Category = require("../models/Category");
+const Product = require("../models/Product");
 
 exports.create = async (req, res) => {
   try {
@@ -21,7 +22,9 @@ exports.create = async (req, res) => {
     });
     await newCategory.save();
 
-    return res.status(200).json({ message: "Category created successfully" , newCategory });
+    return res
+      .status(200)
+      .json({ message: "Category created successfully", newCategory });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: "Internal server error!", error });
@@ -34,7 +37,8 @@ exports.read = async (req, res) => {
     if (!category) {
       return res.status(400).json({ message: "Category not found." });
     }
-    return res.status(200).json({ category });
+    const products = await Product.find({ categoryId: category._id });
+    return res.status(200).json({ category, products });
   } catch (error) {
     return res.status(500).json({ message: "Internal server error." });
   }
@@ -56,10 +60,18 @@ exports.delete = async (req, res) => {
     const id = req.params.id;
     const category = await Category.findById(id);
     if (!category) {
-      return res.status(404).json({message:"category not found."})
+      return res.status(404).json({ message: "category not found." });
     }
-    await Category.findByIdAndDelete(id)
-    return res.status(200).json({message:`Category deleted successfully`})
+    if (category.isDefault) {
+      return res
+        .status(400)
+        .json({ message: "Can not delete default category." });
+    }
+
+    await Category.findByIdAndDelete(id);
+    return res
+      .status(200)
+      .json({ message: `Category deleted successfully`, id });
   } catch (error) {
     return res.status(500).json({ message: "Internal server error", error });
   }

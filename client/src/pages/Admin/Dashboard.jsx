@@ -61,10 +61,10 @@ const Dashboard = () => {
         try {
           let res = await api.delete(`/api/${type}/${id}`);
           if (res.status === 200 && type === "category") {
-            dispatch(removeCategory(id));
+            dispatch(removeCategory(res.data.id));
           }
           if (res.status === 200 && type === "product") {
-            dispatch(removeProduct(id));
+            dispatch(removeProduct(res.data.id));
           }
           Swal.fire("Deleted!", res.data.message, "success");
         } catch (error) {
@@ -170,12 +170,14 @@ const Dashboard = () => {
                         >
                           <Edit className="w-4 h-4" />
                         </Link>
-                        <button
-                          onClick={() => handleDelete(c._id, "category")}
-                          className="p-2 rounded-lg bg-red-100 hover:bg-red-200 text-red-800 transition"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {c.title.toLowerCase() !== "others" && (
+                          <button
+                            onClick={() => handleDelete(c._id, "category")}
+                            className="p-2 rounded-lg bg-red-100 hover:bg-red-200 text-red-800 transition"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

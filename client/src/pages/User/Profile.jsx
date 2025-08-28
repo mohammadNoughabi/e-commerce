@@ -2,14 +2,30 @@ import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../../store/auth/authSlice";
 import api from "../../api/api";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { openModal } from "../../store/Modal/modalSlice";
 
 const Profile = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { userId, userRole } = useSelector((state) => state.auth);
+  const { userId } = useSelector((state) => state.auth);
   const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState(null);
+
+  const fetchUser = async () => {
+    try {
+      let response = await api.get(`/api/user/${userId}`);
+      console.log(response);
+      setUser(response.data.user);
+    } catch (error) {
+      console.log(error);
+      setUser(null);
+    }
+  };
+
+  useEffect(() => {
+    fetchUser();
+  }, [userId]);
 
   const logoutUser = async () => {
     try {
@@ -49,12 +65,7 @@ const Profile = () => {
         <p className="text-gray-600 text-center mb-8">
           Welcome,{" "}
           <span className="font-semibold text-accent-orange">
-            {userId || "Guest"}
-          </span>
-          <br />
-          Role:{" "}
-          <span className="font-semibold text-dark-blue">
-            {userRole || "N/A"}
+            {user ? user.email : "Guest"}
           </span>
         </p>
 

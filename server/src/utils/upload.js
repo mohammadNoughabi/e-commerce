@@ -9,8 +9,6 @@ const storage = multer.diskStorage({
       uploadPath = path.join(__dirname + "/.." + "/uploads" + "/categories");
     } else if (req.baseUrl.includes("product")) {
       uploadPath = path.join(__dirname + "/.." + "/uploads" + "/products");
-    } else if (req.baseUrl.includes("blog")) {
-      uploadPath = path.join(__dirname + "/.." + "/uploads" + "/blogs");
     } else {
       uploadPath = path.join(__dirname + "/.." + "/uploads");
     }

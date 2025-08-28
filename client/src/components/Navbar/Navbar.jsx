@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
+import SearchBar from "../SearchBar/SearchBar";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -13,7 +14,6 @@ const Navbar = () => {
   let navLinks = [
     { text: "Home", path: "/" },
     { text: "Shop", path: "/shop" },
-    { text: "Blog", path: "/blog" },
     { text: "About", path: "/about" },
     !isAuthenticated && { text: "Auth", path: "/auth" },
     isAuthenticated && { text: "Profile", path: "/profile" },
@@ -32,22 +32,27 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className="bg-slate-900 shadow-lg relative z-50 ">
+      <nav className="bg-dark-blue shadow-lg relative z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <div className="flex-shrink-0">
               <span
                 onClick={() => navigate("/")}
-                className="text-white font-bold text-xl hover:text-orange-400 transition-colors duration-300 cursor-pointer"
+                className="text-white font-bold text-xl hover:text-accent-orange transition-colors duration-300 cursor-pointer"
               >
                 E-Commerce
               </span>
             </div>
 
+            {/* Search Bar - Desktop */}
+            <div className="hidden md:flex flex-1 max-w-lg mx-8">
+              <SearchBar />
+            </div>
+
             {/* Desktop Navigation */}
             <div className="hidden md:block">
-              <div className="ml-10 flex items-center space-x-4">
+              <div className="ml-4 flex items-center space-x-2">
                 {navLinks.map((link, index) => (
                   <button
                     key={index}
@@ -55,10 +60,10 @@ const Navbar = () => {
                       handleLinkClick(link.path);
                       navigate(link.path);
                     }}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 cursor-pointer ${
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:bg-accent-orange hover:bg-opacity-20 cursor-pointer ${
                       activeLink === link.path
-                        ? "bg-orange-500 text-white shadow-lg shadow-orange-500/25"
-                        : "text-gray-300 hover:bg-slate-800 hover:text-white hover:shadow-md"
+                        ? "text-accent-orange font-bold"
+                        : "text-light-gray hover:text-white"
                     }`}
                   >
                     {link.text}
@@ -68,10 +73,15 @@ const Navbar = () => {
             </div>
 
             {/* Mobile menu button */}
-            <div className="md:hidden">
+            <div className="md:hidden flex items-center">
+              {/* Search Bar - Mobile (Icon only) */}
+              <div className="mr-4 md:hidde">
+                <SearchBar isMobile={true} />
+              </div>
+              
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="text-gray-300 hover:text-white focus:outline-none transition-all duration-300 transform hover:scale-110"
+                className="text-light-gray hover:text-white focus:outline-none transition-all duration-300"
               >
                 <svg
                   className={`h-6 w-6 transition-transform duration-300 ${
@@ -113,17 +123,17 @@ const Navbar = () => {
 
       {/* Mobile Navigation Menu */}
       <div
-        className={`fixed top-0 right-0 h-full max-w-full w-64 bg-slate-900 shadow-2xl z-50 transform transition-transform duration-300 ease-in-out md:hidden ${
+        className={`fixed top-0 right-0 h-full max-w-full w-64 bg-dark-blue shadow-2xl z-50 transform transition-transform duration-300 ease-in-out md:hidden ${
           isMenuOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
         <div className="flex flex-col h-full">
           {/* Mobile menu header */}
-          <div className="flex items-center justify-between p-4 border-b border-slate-700">
+          <div className="flex items-center justify-between p-4 border-b border-accent-orange border-opacity-30">
             <span className="text-white font-bold text-lg">Menu</span>
             <button
               onClick={() => setIsMenuOpen(false)}
-              className="text-gray-300 hover:text-white transition-colors duration-200 transform hover:scale-110"
+              className="text-light-gray hover:text-white transition-colors duration-200"
             >
               <svg
                 className="h-6 w-6"
@@ -141,6 +151,11 @@ const Navbar = () => {
             </button>
           </div>
 
+          {/* Search Bar - Mobile Expanded */}
+          <div className="px-4 py-3 border-b border-accent-orange border-opacity-20">
+            <SearchBar isExpanded={true} />
+          </div>
+
           {/* Mobile menu items */}
           <div className="flex-1 px-4 py-6 space-y-2">
             {navLinks.map((link, index) => (
@@ -150,10 +165,10 @@ const Navbar = () => {
                   handleLinkClick(link.path);
                   navigate(link.path);
                 }}
-                className={`w-full text-left block px-4 py-3 rounded-lg text-base font-medium transition-all duration-300 transform hover:scale-105 ${
+                className={`w-full text-left block px-4 py-3 rounded-lg text-base font-medium transition-all duration-300 ${
                   activeLink === link.path
-                    ? "bg-orange-500 text-white shadow-lg shadow-orange-500/25"
-                    : "text-gray-300 hover:bg-slate-800 hover:text-white hover:translate-x-2"
+                    ? "text-accent-orange font-bold bg-accent-orange bg-opacity-10"
+                    : "text-light-gray hover:text-white hover:bg-accent-orange hover:bg-opacity-10"
                 }`}
                 style={{
                   transitionDelay: isMenuOpen ? `${index * 100}ms` : "0ms",
@@ -169,8 +184,8 @@ const Navbar = () => {
           </div>
 
           {/* Footer */}
-          <div className="p-4 border-t border-slate-700">
-            <div className="text-center text-gray-400 text-sm">
+          <div className="p-4 border-t border-accent-orange border-opacity-30">
+            <div className="text-center text-light-gray text-sm">
               © 2024 E-Commerce
             </div>
           </div>

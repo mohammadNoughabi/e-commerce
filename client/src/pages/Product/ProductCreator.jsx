@@ -9,6 +9,7 @@ const ProductCreator = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
+  const [stock , setStock] = useState(null);
   const [image, setImage] = useState(null);
   const [gallery, setGallery] = useState([]);
   const [categoryId, setCategoryId] = useState("");
@@ -35,6 +36,7 @@ const ProductCreator = () => {
     if (!title.trim()) newErrors.title = "Title is required";
     if (!image) newErrors.image = "Image is required";
     if (!price) newErrors.price = "Price is required";
+    if (Number(stock) < 0) newErrors.stock = "Stock can not be less than 0"
     if (!description.trim()) newErrors.description = "Description is required";
 
     setErrors(newErrors);
@@ -49,6 +51,7 @@ const ProductCreator = () => {
     formData.append("title", title);
     formData.append("description", description);
     formData.append("price", price);
+    formData.append("stock" , stock);
     formData.append("image", image);
     if (categoryId) formData.append("categoryId", categoryId);
 
@@ -67,6 +70,7 @@ const ProductCreator = () => {
       setTitle("");
       setDescription("");
       setPrice("");
+      setStock(null);
       setImage(null);
       setGallery([]);
       setCategoryId("");
@@ -140,6 +144,19 @@ const ProductCreator = () => {
             className="border border-dark-blue rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-accent-orange"
           />
           {errors.price && <p className="text-red-500">{errors.price}</p>}
+        </div>
+
+        {/* stock */}
+         <div className="flex flex-col">
+          <label className="mb-1 text-dark-blue font-semibold">Stock</label>
+          <input
+            type="text"
+            placeholder="Ex. 500"
+            value={stock}
+            onChange={(e) => setStock(e.target.value)}
+            className="border border-dark-blue rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-accent-orange"
+          />
+          {errors.price && <p className="text-red-500">{errors.stock}</p>}
         </div>
 
         {/* Category */}

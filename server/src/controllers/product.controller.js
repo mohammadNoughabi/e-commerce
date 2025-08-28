@@ -1,11 +1,10 @@
 const Product = require("../models/Product");
 const path = require("path");
 const fs = require("fs").promises;
-const slugify = require("slugify");
 
 exports.create = async (req, res) => {
   try {
-    const { title, description, price, categoryId } = req.body;
+    const { title, description, price, stock, categoryId } = req.body;
     if (!title || !req.files?.image || !price) {
       return res
         .status(400)
@@ -21,7 +20,7 @@ exports.create = async (req, res) => {
       "..",
       "uploads",
       "products",
-      slugify(title, { lower: true, strict: true })
+      title
     );
     await fs.mkdir(productFolder, { recursive: true });
 
@@ -37,7 +36,7 @@ exports.create = async (req, res) => {
     await fs.rename(oldImagePath, newImagePath);
 
     // 🔹 Move gallery images
-    for (const g of gallery) {
+    for (let g of gallery) {
       const oldGalleryPath = path.join(
         __dirname,
         "..",
@@ -54,9 +53,10 @@ exports.create = async (req, res) => {
       title,
       description,
       price,
+      stock,
       categoryId,
-      image: path.join("products", slugify(title), image),
-      gallery: gallery.map((g) => path.join("products", slugify(title), g)),
+      image: image,
+      gallery: gallery ,
     });
 
     await newProduct.save();
@@ -73,10 +73,13 @@ exports.create = async (req, res) => {
 exports.read = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
+    const relatedProducts = await Product.find({
+      categoryId: product.categoryId,
+    });
     if (!product) {
       return res.status(400).json({ message: "Product not found." });
     }
-    return res.status(200).json({ product });
+    return res.status(200).json({ product, relatedProducts });
   } catch (error) {
     return res.status(500).json({ message: "Internal server error." });
   }
@@ -93,4 +96,18 @@ exports.readAll = async (req, res) => {
 
 exports.update = async (req, res) => {};
 
-exports.delete = async (req, res) => {};
+exports.delete = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const product = await Product.findById(id);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found." });
+    }
+    await Product.findByIdAndDelete(id);
+    return res
+      .status(200)
+      .json({ message: "Product deleted successfully.", id });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error." });
+  }
+};

@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const Category = require("./Category");
-
+const path = require("path");
+const fs = require("fs").promises;
 
 const productSchema = new mongoose.Schema({
   title: {
@@ -23,6 +24,11 @@ const productSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  stock: {
+    type: String,
+    required: true,
+    default: "0",
+  },
   categoryId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Category",
@@ -31,19 +37,49 @@ const productSchema = new mongoose.Schema({
 
 productSchema.pre("save", async function (next) {
   if (!this.categoryId) {
-    let others = await Category.findOne({ title: "سایر" });
-
-    if (!others) {
-      others = await Category.create({
-        title: "سایر",
-        description: "سایر محصولات",
-        image: "../../../client/public/images/others.jpeg",
-      });
+    const others = await Category.findOne({ title: "others" });
+    if (others) {
+      this.categoryId = others._id;
     }
-
-    this.categoryId = others._id;
   }
   next();
+});
+
+productSchema.post("findOneAndDelete", async function (doc) {
+  if (doc) {
+    const productFolder = path.join(
+      __dirname,
+      "/..",
+      "uploads",
+      "products",
+      doc.title.toLowerCase()
+    );
+
+    console.log(productFolder);
+
+    const imagePath = path.join(productFolder, doc.image);
+
+    console.log(imagePath);
+
+    const galleryPaths = doc.gallery.map((item) =>
+      path.join(productFolder, item)
+    );
+
+    try {
+      // delete image
+      await fs.unlink(imagePath);
+
+      // delete gallery
+      await Promise.all(galleryPaths.map((item) => fs.unlink(item)));
+
+      // delete product folder
+      await fs.rmdir(productFolder);
+
+      console.log("Product images removed.");
+    } catch (error) {
+      console.log("Error in deleting product images", error);
+    }
+  }
 });
 
 const Product = mongoose.model("Product", productSchema);

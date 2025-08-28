@@ -28,7 +28,12 @@ app.use(
     methods: ["GET", "POST", "PUT", "DELETE"],
   })
 );
-app.use(routes);
+app.use("/api", routes);
+
+//const clientPath = path.join(__dirname, "..", "client", "dist");
+// app.get(/^\/(?!api).*/, (req, res) => {
+//   res.sendFile(path.join(clientPath, "index.html"));
+// });
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {

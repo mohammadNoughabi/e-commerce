@@ -7,46 +7,53 @@ const categorySchema = new mongoose.Schema(
     title: { type: String, required: true },
     image: { type: String, required: true },
     description: { type: String, required: true },
+    isDefault: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
 
 categorySchema.post("save", async function (doc) {
-  const categoryFolder = path.join(
-    __dirname,
-    "..",
-    "uploads",
-    "categories",
-    doc.title
-  );
-
-  try {
-    // Create category-specific folder
-    await fs.mkdir(categoryFolder, { recursive: true });
-
-    // Source file path (where multer saved it)
-    const oldPath = path.join(
+  if (doc.title !== "others") {
+    const categoryFolder = path.join(
       __dirname,
       "..",
       "uploads",
       "categories",
-      doc.image
+      doc.title
     );
 
-    // New destination path
-    const newPath = path.join(categoryFolder, doc.image);
+    try {
+      // Create category-specific folder
+      await fs.mkdir(categoryFolder, { recursive: true });
 
-    // Move the image file
-    await fs.rename(oldPath, newPath);
+      // Source file path (where multer saved it)
+      const oldPath = path.join(
+        __dirname,
+        "..",
+        "uploads",
+        "categories",
+        doc.image
+      );
 
-    console.log("Category image moved successfully to folder:", newPath);
-  } catch (error) {
-    console.error("Error in creating category folder:", error);
+      // New destination path
+      const newPath = path.join(categoryFolder, doc.image);
+
+      // Move the image file
+      await fs.rename(oldPath, newPath);
+
+      console.log("Category image moved successfully to folder:", newPath);
+    } catch (error) {
+      console.error("Error in creating category folder:", error);
+    }
   }
 });
 
 categorySchema.post("findOneAndDelete", async function (doc) {
   if (doc) {
+    // دسته‌های پیش‌فرض نباید اصلاً اینجا حذف بشن،
+    // ولی برای اطمینان یک چک اضافه بذاریم
+    if (doc.isDefault) return;
+
     const categoryFolder = path.join(
       __dirname,
       "..",
@@ -58,7 +65,6 @@ categorySchema.post("findOneAndDelete", async function (doc) {
     const imagePath = path.join(categoryFolder, doc.image);
 
     try {
-      // حذف تصویر
       await fs.unlink(imagePath);
       console.log("Category image deleted:", imagePath);
 
