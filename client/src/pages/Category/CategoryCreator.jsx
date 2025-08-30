@@ -9,6 +9,7 @@ import { addCategory } from "../../store/category/categorySlice";
 const CategoryCreator = () => {
   const [title, setTitle] = useState("");
   const [image, setImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null); 
   const [description, setDescription] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -36,6 +37,14 @@ const CategoryCreator = () => {
         return;
       }
       setImage(file);
+      
+      // Create a preview URL for the image
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+      
       setErrors({ ...errors, image: null });
     }
   };
@@ -133,6 +142,20 @@ const CategoryCreator = () => {
             />
             {errors.image && (
               <span className="text-red-500 text-sm mt-1">{errors.image}</span>
+            )}
+            
+            {/* Image Preview */}
+            {imagePreview && (
+              <div className="mt-4">
+                <p className="text-dark-blue font-medium mb-2">Image Preview:</p>
+                <div className="border border-light-gray rounded-lg p-2 flex justify-center">
+                  <img 
+                    src={imagePreview} 
+                    alt="Preview" 
+                    className="max-h-64 object-contain rounded-lg"
+                  />
+                </div>
+              </div>
             )}
           </div>
 

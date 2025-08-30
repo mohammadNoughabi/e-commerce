@@ -53,7 +53,7 @@ const Footer = () => {
                 <li key={i}>
                   <button
                     onClick={() => navigate(link.path)}
-                    className="text-light-gray hover:text-accent-orange text-sm font-medium transition-all duration-300 hover:translate-x-2 block"
+                    className="text-light-gray cursor-pointer hover:text-accent-orange text-sm font-medium transition-all duration-300 hover:translate-x-2 block"
                   >
                     {link.text}
                   </button>

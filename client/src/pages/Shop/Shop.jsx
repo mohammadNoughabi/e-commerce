@@ -4,7 +4,7 @@ import { Helmet } from "react-helmet";
 import { ArrowRight, ShoppingBag } from "lucide-react";
 
 const Shop = () => {
-  const categories = useSelector((state) => state.category.categories);
+  const categories = useSelector((state) => state.category?.categories || []);
   const apiBase = import.meta.env.VITE_API_BASE;
   const navigate = useNavigate();
 

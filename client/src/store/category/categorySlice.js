@@ -18,7 +18,7 @@ export const categorySlice = createSlice({
       state.categories = state.categories.filter(
         (category) => category._id !== action.payload
       );
-    },
+    }
   },
 });
 

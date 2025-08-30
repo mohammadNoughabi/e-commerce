@@ -4,7 +4,7 @@ const fs = require("fs").promises;
 
 const categorySchema = new mongoose.Schema(
   {
-    title: { type: String, required: true },
+    title: { type: String, required: true, unique: true },
     image: { type: String, required: true },
     description: { type: String, required: true },
     isDefault: { type: Boolean, default: false },
@@ -48,10 +48,42 @@ categorySchema.post("save", async function (doc) {
   }
 });
 
+categorySchema.post("findOneAndUpdate", async function (doc) {
+  if (doc && this.getUpdate().$set && this.getUpdate().$set.title) {
+    // If title was updated, we need to update the folder name
+    const oldTitle = this.getQuery().title || doc.title;
+    const newTitle = this.getUpdate().$set.title;
+    
+    if (oldTitle !== newTitle) {
+      const oldFolderPath = path.join(
+        __dirname,
+        "..",
+        "uploads",
+        "categories",
+        oldTitle
+      );
+      
+      const newFolderPath = path.join(
+        __dirname,
+        "..",
+        "uploads",
+        "categories",
+        newTitle
+      );
+      
+      try {
+        await fs.rename(oldFolderPath, newFolderPath);
+        console.log(`Category folder renamed from ${oldTitle} to ${newTitle}`);
+      } catch (error) {
+        console.error("Error renaming category folder:", error);
+      }
+    }
+  }
+});
+
 categorySchema.post("findOneAndDelete", async function (doc) {
   if (doc) {
-    // دسته‌های پیش‌فرض نباید اصلاً اینجا حذف بشن،
-    // ولی برای اطمینان یک چک اضافه بذاریم
+    // Prevent deletion of default categories
     if (doc.isDefault) return;
 
     const categoryFolder = path.join(
@@ -62,15 +94,11 @@ categorySchema.post("findOneAndDelete", async function (doc) {
       doc.title
     );
 
-    const imagePath = path.join(categoryFolder, doc.image);
-
     try {
-      await fs.unlink(imagePath);
-      console.log("Category image deleted:", imagePath);
-
-      await fs.rm(categoryFolder, { recursive: true });
+      await fs.rm(categoryFolder, { recursive: true, force: true });
+      console.log("Category folder deleted:", categoryFolder);
     } catch (error) {
-      console.error("Error deleting category image:", error);
+      console.error("Error deleting category folder:", error);
     }
   }
 });
