@@ -2,11 +2,27 @@ import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import { ArrowRight, ShoppingBag } from "lucide-react";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation, Pagination, Autoplay } from "swiper/modules";
+
+// Import Swiper styles
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
 
 const Shop = () => {
   const categories = useSelector((state) => state.category?.categories || []);
+  const products = useSelector((state) => state.product?.products || []);
   const apiBase = import.meta.env.VITE_API_BASE;
   const navigate = useNavigate();
+
+  // Group products by category
+  const productsByCategory = {};
+  categories.forEach((category) => {
+    productsByCategory[category._id] = products.filter(
+      (product) => product.categoryId === category._id
+    );
+  });
 
   // JSON-LD Structured Data
   const jsonLd = {
@@ -25,7 +41,7 @@ const Shop = () => {
   };
 
   return (
-    <main className="min-h-screen bg-light-gray pt-12 pb-16 px-6">
+    <main className="min-h-screen bg-light-gray pt-16 pb-20 px-4 sm:px-6 lg:px-8">
       {/* SEO Meta */}
       <Helmet>
         <title>Shop Categories | My Store</title>
@@ -37,63 +53,163 @@ const Shop = () => {
       </Helmet>
 
       <section className="max-w-7xl mx-auto">
-        {/* Title */}
-        <div className="flex items-center justify-center gap-3 mb-14">
-          <ShoppingBag className="w-8 h-8 text-accent-orange" />
-          <h1 className="text-3xl md:text-5xl font-extrabold text-center text-dark-blue tracking-wide">
-            Shop Categories
-          </h1>
+        {/* Hero Section */}
+        <div className="text-center mb-16">
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <div className="p-3 bg-accent-orange rounded-full shadow-lg">
+              <ShoppingBag className="w-8 h-8 text-white" />
+            </div>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-dark-blue tracking-tight">
+              Shop Categories
+            </h1>
+          </div>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Discover our curated collection of products across various categories. 
+            Find exactly what you're looking for with ease.
+          </p>
         </div>
 
         {/* Loading / Empty states */}
         {!categories ? (
-          <p className="text-center text-gray-600">Loading categories...</p>
+          <div className="text-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-orange mx-auto mb-4"></div>
+            <p className="text-gray-600 text-lg">Loading categories...</p>
+          </div>
         ) : categories.length === 0 ? (
-          <p className="text-center text-gray-600">
-            No categories available at the moment.
-          </p>
+          <div className="text-center py-20 bg-white rounded-2xl shadow-sm">
+            <ShoppingBag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-600 text-lg">
+              No categories available at the moment.
+            </p>
+          </div>
         ) : (
-          /* Grid */
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
+          /* Categories with Product Sliders */
+          <div className="space-y-16">
             {categories.map((cat) => (
-              <article
-                key={cat._id}
-                className="group bg-white rounded-xl overflow-hidden border border-light-gray shadow-sm hover:shadow-lg hover:border-accent-orange transition-all duration-300 hover:-translate-y-1 flex flex-col"
+              <div 
+                key={cat._id} 
+                className="bg-white rounded-2xl p-6 lg:p-8 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow duration-300"
               >
-                {/* Image */}
-                <div className="relative h-32 md:h-36 overflow-hidden">
-                  <img
-                    src={`${apiBase}/uploads/categories/${cat.title}/${cat.image}`}
-                    alt={`Shop category: ${cat.title}`}
-                    loading="lazy"
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-dark-blue/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                </div>
-
-                {/* Content */}
-                <div className="p-3 md:p-4 flex flex-col flex-1">
-                  <div className="flex-1">
-                    <h2 className="text-base md:text-lg font-semibold text-dark-blue mb-1 group-hover:text-accent-orange transition-colors duration-300">
+                {/* Category Header */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
+                  <div>
+                    <h2 className="text-2xl lg:text-3xl font-bold text-dark-blue mb-2">
                       {cat.title}
                     </h2>
-                    <p
-                      className="text-xs md:text-sm text-black/70 mb-3 line-clamp-2"
-                      dangerouslySetInnerHTML={{ __html: cat.description }}
-                    ></p>
                   </div>
-
                   <button
-                    aria-label={`Explore ${cat.title}`}
-                    className="mt-auto w-full py-1.5 flex items-center justify-center gap-2 rounded-md bg-accent-orange cursor-pointer text-dark-blue text-sm font-medium hover:bg-dark-blue hover:text-white transition-colors duration-300 shadow-sm hover:shadow-accent-orange/30"
-                    onClick={() => {
-                      navigate(`/category/${cat._id}`);
-                    }}
+                    onClick={() => navigate(`/category/${cat._id}`)}
+                    className="flex items-center gap-2 px-6 py-3 bg-accent-orange text-white rounded-full hover:bg-dark-blue transition-all duration-300 hover:scale-105 shadow-md hover:shadow-lg"
                   >
-                    Explore <ArrowRight className="w-4 h-4" />
+                    View All
+                    <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
-              </article>
+
+                {/* Products Slider */}
+                {productsByCategory[cat._id]?.length > 0 ? (
+                  <div className="relative">
+                    <Swiper
+                      modules={[Navigation, Pagination, Autoplay]}
+                      spaceBetween={24}
+                      slidesPerView={1}
+                      loop={true}
+                      autoplay={{
+                        delay: 4000,
+                        disableOnInteraction: false,
+                        pauseOnMouseEnter: true,
+                      }}
+                      pagination={{
+                        clickable: true,
+                        el: '.swiper-pagination',
+                        bulletClass: 'swiper-pagination-bullet',
+                        bulletActiveClass: 'swiper-pagination-bullet-active bg-accent-orange',
+                      }}
+                      navigation={{
+                        nextEl: '.swiper-button-next',
+                        prevEl: '.swiper-button-prev',
+                      }}
+                      breakpoints={{
+                        480: {
+                          slidesPerView: 1,
+                        },
+                        640: {
+                          slidesPerView: 2,
+                        },
+                        768: {
+                          slidesPerView: 3,
+                        },
+                        1024: {
+                          slidesPerView: 4,
+                        },
+                        1280: {
+                          slidesPerView: 5,
+                        },
+                      }}
+                      className="pb-12"
+                    >
+                      {productsByCategory[cat._id].map((product) => (
+                        <SwiperSlide key={product._id}>
+                          <div
+                            className="group bg-white rounded-xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 cursor-pointer border border-gray-100 hover:border-accent-orange/20"
+                            onClick={() => navigate(`/product/${product._id}`)}
+                          >
+                            <div className="relative h-56 overflow-hidden">
+                              <img
+                                src={`${apiBase}/uploads/products/${
+                                  product.title
+                                }/${product.image || "default.jpg"}`}
+                                alt={product.title}
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                              />
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300" />
+                            </div>
+                            <div className="p-5">
+                              <h3 className="font-semibold text-dark-blue text-lg mb-2 line-clamp-2 group-hover:text-accent-orange transition-colors duration-200">
+                                {product.title}
+                              </h3>
+                              <div className="flex items-center justify-between">
+                                <span className="text-2xl font-bold text-accent-orange">
+                                  ${product.price}
+                                </span>
+                                {product.stock > 0 ? (
+                                  <span className="text-sm bg-green-100 text-green-800 px-3 py-1 rounded-full">
+                                    In Stock
+                                  </span>
+                                ) : (
+                                  <span className="text-sm bg-red-100 text-red-800 px-3 py-1 rounded-full">
+                                    Out of Stock
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </SwiperSlide>
+                      ))}
+                    </Swiper>
+                    
+                    {/* Custom Navigation */}
+                    <div className="swiper-button-prev !text-accent-orange !w-12 !h-12 !bg-white !rounded-full !shadow-lg hover:!bg-dark-blue hover:!text-white transition-all duration-200 after:!text-xl"></div>
+                    <div className="swiper-button-next !text-accent-orange !w-12 !h-12 !bg-white !rounded-full !shadow-lg hover:!bg-dark-blue hover:!text-white transition-all duration-200 after:!text-xl"></div>
+                    
+                    {/* Custom Pagination */}
+                    <div className="swiper-pagination !bottom-0"></div>
+                  </div>
+                ) : (
+                  <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                    <ShoppingBag className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500 text-lg">
+                      No products available in this category yet.
+                    </p>
+                    <button
+                      onClick={() => navigate(`/category/${cat._id}`)}
+                      className="mt-4 px-6 py-2 bg-gray-200 text-gray-600 rounded-full hover:bg-gray-300 transition-colors duration-200"
+                    >
+                      Check Back Later
+                    </button>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         )}

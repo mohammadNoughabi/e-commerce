@@ -35,11 +35,12 @@ exports.create = async (req, res) => {
 
 exports.read = async (req, res) => {
   try {
-    const category = await Category.findById(req.params.id);
+    const categoryId = req.params.id;
+    const category = await Category.findById(categoryId);
     if (!category) {
       return res.status(400).json({ message: "Category not found." });
     }
-    const products = await Product.find({ categoryId: category._id });
+    const products = await Product.find({ categoryId: categoryId });
     return res.status(200).json({ category, products });
   } catch (error) {
     return res.status(500).json({ message: "Internal server error." });

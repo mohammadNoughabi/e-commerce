@@ -12,7 +12,11 @@ productRoutes.post(
   upload.fields([{ name: "image", maxCount: 1 }, { name: "gallery" }]),
   productController.create
 );
-productRoutes.put("/:id", productController.update);
+productRoutes.put(
+  "/:id",
+  upload.fields([{ name: "image", maxCount: 1 }, { name: "gallery" }]),
+  productController.update
+);
 productRoutes.delete("/:id", productController.delete);
 
 module.exports = productRoutes;
