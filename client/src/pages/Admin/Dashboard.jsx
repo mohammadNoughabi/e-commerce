@@ -196,7 +196,7 @@ const Dashboard = () => {
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex border-b border-light-gray mb-6">
+        <div className="flex border-b border-light-gray mb-6 overflow-x-auto">
           <button
             onClick={() => setActiveTab("overview")}
             className={`px-4 py-2 font-medium cursor-pointer ${
@@ -313,7 +313,7 @@ const Dashboard = () => {
                 onClick={() => navigate("/category/create")}
                 className="bg-accent-orange text-dark-blue px-4 py-2 rounded-lg font-medium hover:bg-accent-orange/90 transition flex items-center gap-2 cursor-pointer"
               >
-                <Plus className="w-4 h-4" /> New Category
+                <Plus className="w-4 h-4" /> New 
               </button>
             </div>
 
@@ -390,7 +390,7 @@ const Dashboard = () => {
                 onClick={() => navigate("/product/create")}
                 className="bg-accent-orange text-dark-blue px-4 py-2 rounded-lg font-medium hover:bg-accent-orange/90 transition flex items-center gap-2 cursor-pointer"
               >
-                <Plus className="w-4 h-4" /> New Product
+                <Plus className="w-4 h-4" /> New 
               </button>
             </div>
 

@@ -6,8 +6,10 @@ import Features from "../../components/Features/Features";
 import FAQ from "../../components/FAQ/FAQ";
 
 const Home = () => {
+  const apiBase = import.meta.env.VITE_API_BASE;
   const navigate = useNavigate();
   const products = useSelector((state) => state.product.products) || [];
+  const categories = useSelector((state) => state.category.categories) || [];
   const latestProducts = products.slice(-8).reverse();
 
   return (
@@ -106,23 +108,43 @@ const Home = () => {
       {/* Features Section */}
       <Features />
 
-      {/* Newsletter Section */}
-      {/* <section className="container mx-auto px-6 py-12 bg-dark-blue rounded-2xl text-center max-w-5xl">
-        <h2 className="text-white text-2xl font-bold mb-4">Stay Updated</h2>
-        <p className="text-light-gray mb-6 max-w-md mx-auto">
-          Subscribe to our newsletter for exclusive deals and new product announcements
-        </p>
-        <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-          <input 
-            type="email" 
-            placeholder="Your email address"
-            className="flex-1 px-4 py-3 rounded-lg border-0 focus:ring-2 focus:ring-accent-orange"
-          />
-          <button className="px-6 py-3 bg-accent-orange text-dark-blue font-semibold rounded-lg hover:bg-accent-orange/90 transition-colors">
-            Subscribe
-          </button>
-        </div>
-      </section> */}
+      {/* Categories Section */}
+      {categories.length > 0 && (
+        <section className="container mx-auto px-6">
+          <div className="text-center mb-12">
+            <h2 className="text-dark-blue text-3xl font-bold mb-4">
+              Shop by Category
+            </h2>
+            <p className="text-dark-blue/80 max-w-2xl mx-auto">
+              Explore our wide range of categories and find exactly what you
+              need.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+            {categories.map((category) => (
+              <div
+                key={category._id}
+                onClick={() => navigate(`/category/${category._id}`)}
+                className="cursor-pointer group bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300"
+              >
+                <div className="h-48 w-full overflow-hidden">
+                  <img
+                    src={`${apiBase}/uploads/categories/${category.title}/${category.image}`}
+                    alt={category.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+                <div className="p-4 text-center">
+                  <h3 className="text-lg font-semibold text-dark-blue group-hover:text-accent-orange transition-colors">
+                    {category.title}
+                  </h3>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* FAQ Section */}
       <FAQ />

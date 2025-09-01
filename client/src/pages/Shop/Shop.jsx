@@ -69,7 +69,10 @@ const Shop = () => {
           name="description"
           content="Browse our shop categories including electronics, fashion, accessories, and more. Discover products tailored to your needs."
         />
-        <link rel="canonical" href={`https://mystore.com${location.pathname}`} />
+        <link
+          rel="canonical"
+          href={`https://mystore.com${location.pathname}`}
+        />
         <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
       </Helmet>
 
@@ -103,13 +106,13 @@ const Shop = () => {
         {!categories ? (
           <div className="text-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-orange mx-auto mb-4"></div>
-            <p className="text-gray-600 text-lg">Loading categories...</p>
+            <p className="text-gray-600 text-lg">Loading shop...</p>
           </div>
         ) : categories.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-2xl shadow-sm">
             <ShoppingBag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-600 text-lg">
-              No categories available at the moment.
+              No products available at the moment.
             </p>
           </div>
         ) : (
@@ -127,16 +130,10 @@ const Shop = () => {
                       {cat.title}
                     </h2>
                     <p className="text-gray-500 text-sm lg:text-base max-w-2xl">
-                      Discover our curated collection of {cat.title.toLowerCase()} products
+                      Discover our curated collection of{" "}
+                      {cat.title.toLowerCase()} products
                     </p>
                   </div>
-                  <button
-                    onClick={() => navigate(`/category/${cat._id}`)}
-                    className="flex cursor-pointer items-center gap-2 px-5 py-2.5 bg-white text-gray-700 rounded-full hover:bg-gray-50 transition-all duration-300 border border-gray-200 hover:border-gray-300 shadow-xs hover:shadow-sm font-medium text-sm whitespace-nowrap"
-                  >
-                    View All
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
                 </div>
 
                 {/* Products Slider */}
@@ -239,6 +236,17 @@ const Shop = () => {
                     <div className="swiper-pagination !bottom-0"></div>
                   </div>
                 )}
+
+                {/* Category footer */}
+                <div className="mt-3 font-bold">
+                  <button
+                    onClick={() => navigate(`/category/${cat._id}`)}
+                    className="flex cursor-pointer items-center gap-2 px-5 py-2.5 bg-white text-gray-700 rounded-full hover:bg-gray-50 transition-all duration-300 border border-gray-200 hover:border-gray-300 shadow-xs hover:shadow-sm font-medium text-sm whitespace-nowrap"
+                  >
+                    View All
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>

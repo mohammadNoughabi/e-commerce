@@ -99,119 +99,109 @@ exports.update = async (req, res) => {
   try {
     const { id } = req.params;
     const { title, description, price, stock, categoryId } = req.body;
+    const keepGallery = req.body.keepGallery
+      ? JSON.parse(req.body.keepGallery)
+      : [];
 
-    // Find the existing product
-    const existingProduct = await Product.findById(id);
-    if (!existingProduct) {
-      return res.status(404).json({ message: "Product not found." });
+    const product = await Product.findById(id);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
     }
-
-    // Check if required fields are provided
     if (!title || !price) {
       return res.status(400).json({ message: "Title and Price are required" });
     }
 
-    // Define paths
-    const baseUploadPath = path.join("uploads", "products");
-    const oldProductFolder = path.join(baseUploadPath, existingProduct.title);
-    const newProductFolder = path.join(baseUploadPath, title);
+    const baseUploadPath = path.join(__dirname, "..", "uploads", "products");
+    const oldFolder = path.join(baseUploadPath, product.title);
+    const newFolder = path.join(baseUploadPath, title);
 
-    // If product title changed, we need to move all files to new folder
-    if (existingProduct.title !== title) {
-      // Create new directory if it doesn't exist
-      await fs.mkdir(newProductFolder, { recursive: true });
-
-      // Move main image if it exists
-      if (existingProduct.image) {
-        const oldImagePath = path.join(oldProductFolder, existingProduct.image);
-        const newImagePath = path.join(newProductFolder, existingProduct.image);
-
-        if (await fileExists(oldImagePath)) {
-          await fs.rename(oldImagePath, newImagePath);
-        }
-      }
-
-      // Move gallery images if they exist
-      if (existingProduct.gallery && existingProduct.gallery.length > 0) {
-        for (let imageName of existingProduct.gallery) {
-          const oldImagePath = path.join(oldProductFolder, imageName);
-          const newImagePath = path.join(newProductFolder, imageName);
-
-          if (await fileExists(oldImagePath)) {
-            await fs.rename(oldImagePath, newImagePath);
+    // --- 1. Ensure product folder exists (rename if title changed)
+    if (product.title !== title) {
+      if (await fileExists(oldFolder)) {
+        await fs.mkdir(newFolder, { recursive: true });
+        // move existing files
+        if (product.image) {
+          const oldPath = path.join(oldFolder, product.image);
+          const newPath = path.join(newFolder, product.image);
+          if (await fileExists(oldPath)) {
+            await fs.rename(oldPath, newPath);
           }
         }
+        for (const g of product.gallery) {
+          const oldPath = path.join(oldFolder, g);
+          const newPath = path.join(newFolder, g);
+          if (await fileExists(oldPath)) {
+            await fs.rename(oldPath, newPath);
+          }
+        }
+        // cleanup old folder
+        try {
+          await fs.rmdir(oldFolder);
+        } catch (_) {}
+      } else {
+        await fs.mkdir(newFolder, { recursive: true });
       }
-
-      // Remove old directory if it's empty
-      try {
-        await fs.rmdir(oldProductFolder);
-      } catch (err) {
-        // Directory might not be empty if there were other files, that's okay
-      }
+    } else {
+      await fs.mkdir(newFolder, { recursive: true });
     }
 
-    // Handle new main image upload if provided
-    let newImageName = existingProduct.image;
-    if (req.files?.image) {
-      // Delete old main image if it exists
-      if (existingProduct.image) {
-        const oldImagePath = path.join(newProductFolder, existingProduct.image);
-        if (await fileExists(oldImagePath)) {
-          await fs.unlink(oldImagePath);
+    // --- 2. Handle main image replacement
+    if (req.files?.image?.length) {
+      // delete old image
+      if (product.image) {
+        const oldImgPath = path.join(newFolder, product.image);
+        if (await fileExists(oldImgPath)) {
+          await fs.unlink(oldImgPath);
         }
       }
-
-      // Save new main image
-      newImageName = req.files.image[0].filename;
-      const tempImagePath = path.join(baseUploadPath, newImageName);
-      const newImagePath = path.join(newProductFolder, newImageName);
-
-      // Ensure directory exists
-      await fs.mkdir(newProductFolder, { recursive: true });
-
-      // Move image from temp location to product folder
-      await fs.rename(tempImagePath, newImagePath);
+      // move uploaded new one
+      const uploaded = req.files.image[0];
+      const tempPath = path.join(baseUploadPath, uploaded.filename);
+      const destPath = path.join(newFolder, uploaded.filename);
+      if (await fileExists(tempPath)) {
+        await fs.rename(tempPath, destPath);
+      }
+      product.image = uploaded.filename;
     }
 
-    // Handle gallery images
-    let newGallery = [...existingProduct.gallery];
-
-    // Process new gallery uploads if any
-    if (req.files?.gallery) {
-      for (let file of req.files.gallery) {
-        const tempFilePath = path.join(baseUploadPath, file.filename);
-        const newFilePath = path.join(newProductFolder, file.filename);
-
-        // Ensure directory exists
-        await fs.mkdir(newProductFolder, { recursive: true });
-
-        // Move file from temp location to product folder
-        await fs.rename(tempFilePath, newFilePath);
-
-        // Add to gallery array
-        newGallery.push(file.filename);
+    // --- 3. Handle gallery images
+    // delete removed ones
+    for (const g of product.gallery) {
+      if (!keepGallery.includes(g)) {
+        const filePath = path.join(newFolder, g);
+        if (await fileExists(filePath)) {
+          await fs.unlink(filePath);
+        }
       }
     }
 
-    // Update product in database
-    const updatedProduct = await Product.findByIdAndUpdate(
-      id,
-      {
-        title,
-        description,
-        price,
-        stock,
-        categoryId: categoryId || null,
-        image: newImageName,
-        gallery: newGallery,
-      },
-      { new: true, runValidators: true }
-    );
+    let finalGallery = [...keepGallery];
+
+    // add new uploaded ones
+    if (req.files?.gallery?.length) {
+      for (const file of req.files.gallery) {
+        const tempPath = path.join(baseUploadPath, file.filename);
+        const destPath = path.join(newFolder, file.filename);
+        if (await fileExists(tempPath)) {
+          await fs.rename(tempPath, destPath);
+        }
+        finalGallery.push(file.filename);
+      }
+    }
+
+    // --- 4. Update product fields
+    product.title = title;
+    product.description = description;
+    product.price = price;
+    product.stock = stock;
+    product.categoryId = categoryId || null;
+    product.gallery = finalGallery;
+
+    await product.save();
 
     return res.status(200).json({
       message: "Product updated successfully",
-      product: updatedProduct,
+      product,
     });
   } catch (error) {
     console.error("❌ Error in update product:", error);

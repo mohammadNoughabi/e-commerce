@@ -10,17 +10,24 @@ const ProductEditor = () => {
   let navigate = useNavigate();
   let dispatch = useDispatch();
   let apiBase = import.meta.env.VITE_API_BASE;
+
   const [product, setProduct] = useState(null);
   const [categories, setCategories] = useState([]);
+
+  // form fields
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
   const [categoryId, setCategoryId] = useState("");
+
+  // images
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
-  const [gallery, setGallery] = useState([]);
-  const [galleryPreviews, setGalleryPreviews] = useState([]);
+  const [gallery, setGallery] = useState([]); // only new files
+  const [galleryPreviews, setGalleryPreviews] = useState([]); // filenames + blob urls
+  const [removedGallery, setRemovedGallery] = useState([]); // filenames user removed
+
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
 
@@ -99,18 +106,26 @@ const ProductEditor = () => {
   };
 
   const removeGalleryImage = (index) => {
-    const updatedGallery = [...gallery];
-    const updatedPreviews = [...galleryPreviews];
+    const removedItem = galleryPreviews[index];
 
-    // Revoke object URL if it's a new file
-    if (updatedPreviews[index].startsWith("blob:")) {
-      URL.revokeObjectURL(updatedPreviews[index]);
+    if (removedItem && !removedItem.startsWith("blob:")) {
+      // It’s an existing filename
+      setRemovedGallery([...removedGallery, removedItem]);
+    } else {
+      // It’s a new file
+      const updatedGallery = [...gallery];
+      updatedGallery.splice(
+        index - (galleryPreviews.length - gallery.length),
+        1
+      );
+      setGallery(updatedGallery);
     }
 
-    updatedGallery.splice(index, 1);
+    const updatedPreviews = [...galleryPreviews];
+    if (removedItem.startsWith("blob:")) {
+      URL.revokeObjectURL(removedItem);
+    }
     updatedPreviews.splice(index, 1);
-
-    setGallery(updatedGallery);
     setGalleryPreviews(updatedPreviews);
   };
 
@@ -135,6 +150,11 @@ const ProductEditor = () => {
     gallery.forEach((file, index) => {
       formData.append("gallery", file);
     });
+
+    const keepGallery = galleryPreviews.filter(
+      (g) => !g.startsWith("blob:") && !removedGallery.includes(g)
+    );
+    formData.append("keepGallery", JSON.stringify(keepGallery));
 
     try {
       let response = await api.put(`/api/product/${id}`, formData, {
@@ -169,8 +189,10 @@ const ProductEditor = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg border border-gray-100">
-      <h2 className="text-3xl font-bold text-dark-blue mb-8 pb-2 border-b border-gray-200">Edit Product</h2>
-      
+      <h2 className="text-3xl font-bold text-dark-blue mb-8 pb-2 border-b border-gray-200">
+        Edit Product
+      </h2>
+
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Title Field */}
         <div className="bg-gray-50 p-5 rounded-lg border border-gray-200">
@@ -192,8 +214,19 @@ const ProductEditor = () => {
           />
           {errors.title && (
             <p className="mt-2 text-red-600 text-sm flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4 mr-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               {errors.title}
             </p>
@@ -211,8 +244,19 @@ const ProductEditor = () => {
           <Editor value={description} onChange={setDescription} />
           {errors.description && (
             <p className="mt-2 text-red-600 text-sm flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4 mr-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               {errors.description}
             </p>
@@ -247,8 +291,19 @@ const ProductEditor = () => {
             </div>
             {errors.price && (
               <p className="mt-2 text-red-600 text-sm flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4 mr-1"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
                 {errors.price}
               </p>
@@ -275,8 +330,19 @@ const ProductEditor = () => {
             />
             {errors.stock && (
               <p className="mt-2 text-red-600 text-sm flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4 mr-1"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
                 {errors.stock}
               </p>
@@ -314,7 +380,11 @@ const ProductEditor = () => {
           >
             Main Image *
           </label>
-          <div className={`border-2 border-dashed rounded-lg p-6 text-center ${errors.image ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}>
+          <div
+            className={`border-2 border-dashed rounded-lg p-6 text-center ${
+              errors.image ? "border-red-500 bg-red-50" : "border-gray-300"
+            }`}
+          >
             <input
               type="file"
               id="image"
@@ -323,17 +393,43 @@ const ProductEditor = () => {
               className="hidden"
             />
             <label htmlFor="image" className="cursor-pointer">
-              <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="mx-auto h-12 w-12 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
               </svg>
-              <p className="mt-2 text-sm text-gray-600">Click to upload main product image</p>
-              <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF up to 10MB</p>
+              <p className="mt-2 text-sm text-gray-600">
+                Click to upload main product image
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                PNG, JPG, GIF up to 10MB
+              </p>
             </label>
           </div>
           {errors.image && (
             <p className="mt-2 text-red-600 text-sm flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4 mr-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               {errors.image}
             </p>
@@ -341,10 +437,16 @@ const ProductEditor = () => {
 
           {imagePreview && (
             <div className="mt-6">
-              <p className="text-sm font-medium text-dark-blue mb-3">Image Preview:</p>
+              <p className="text-sm font-medium text-dark-blue mb-3">
+                Image Preview:
+              </p>
               <div className="relative inline-block group">
                 <img
-                  src={imagePreview.startsWith("blob:") ? imagePreview : `${apiBase}/uploads/products/${product.title}/${imagePreview}`}
+                  src={
+                    imagePreview.startsWith("blob:")
+                      ? imagePreview
+                      : `${apiBase}/uploads/products/${product.title}/${imagePreview}`
+                  }
                   alt="Main image preview"
                   className="h-48 w-48 object-cover rounded-lg border-2 border-gray-300 shadow-sm group-hover:opacity-90 transition-opacity"
                 />
@@ -384,7 +486,11 @@ const ProductEditor = () => {
           >
             Gallery Images
           </label>
-          <div className={`border-2 border-dashed rounded-lg p-6 text-center ${errors.gallery ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}>
+          <div
+            className={`border-2 border-dashed rounded-lg p-6 text-center ${
+              errors.gallery ? "border-red-500 bg-red-50" : "border-gray-300"
+            }`}
+          >
             <input
               type="file"
               id="gallery"
@@ -394,17 +500,43 @@ const ProductEditor = () => {
               className="hidden"
             />
             <label htmlFor="gallery" className="cursor-pointer">
-              <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="mx-auto h-12 w-12 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"
+                />
               </svg>
-              <p className="mt-2 text-sm text-gray-600">Click to upload multiple gallery images</p>
-              <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF up to 10MB each</p>
+              <p className="mt-2 text-sm text-gray-600">
+                Click to upload multiple gallery images
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                PNG, JPG, GIF up to 10MB each
+              </p>
             </label>
           </div>
           {errors.gallery && (
             <p className="mt-2 text-red-600 text-sm flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4 mr-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               {errors.gallery}
             </p>
@@ -412,12 +544,18 @@ const ProductEditor = () => {
 
           {galleryPreviews.length > 0 && (
             <div className="mt-6">
-              <p className="text-sm font-medium text-dark-blue mb-3">Gallery Previews:</p>
+              <p className="text-sm font-medium text-dark-blue mb-3">
+                Gallery Previews:
+              </p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {galleryPreviews.map((preview, index) => (
                   <div key={index} className="relative group">
                     <img
-                      src={preview.startsWith("blob:") ? preview : `${apiBase}/uploads/products/${product.title}/${preview}`}
+                      src={
+                        preview.startsWith("blob:")
+                          ? preview
+                          : `${apiBase}/uploads/products/${product.title}/${preview}`
+                      }
                       alt={`Gallery preview ${index + 1}`}
                       className="h-32 w-full object-cover rounded-lg border border-gray-300 shadow-sm group-hover:opacity-90 transition-opacity"
                     />
@@ -464,9 +602,25 @@ const ProductEditor = () => {
           >
             {isLoading ? (
               <>
-                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <svg
+                  className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
                 </svg>
                 Updating...
               </>

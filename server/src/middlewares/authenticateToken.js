@@ -2,22 +2,30 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
 function authenticateToken(req, res, next) {
-  const authHeader = req.headers["authorization"];
+  // 1️⃣ First, try to get token from cookies
+  let token = req.cookies?.token;
 
-  let token;
-  if (authHeader) {
-    token = authHeader.split(" ")[1];
-  }
-
+  // 2️⃣ If not in cookies, check Authorization header
   if (!token) {
-    return res.status(401).json({ message: "Access denied.No token provided" });
+    const authHeader = req.headers["authorization"];
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.split(" ")[1];
+    }
   }
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+  // 3️⃣ If no token, block request
+  if (!token) {
+    return res.status(401).json({ message: "Access denied. No token provided." });
+  }
+
+  // 4️⃣ Verify token
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
     if (err) {
-      return res.status(403).json({ message: "Invalid or Expired token." });
+      return res.status(403).json({ message: "Invalid or expired token." });
     }
-    req.user = user;
+
+    // Attach decoded user data to request
+    req.user = decoded;
     next();
   });
 }
