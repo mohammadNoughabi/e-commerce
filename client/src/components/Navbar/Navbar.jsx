@@ -6,191 +6,207 @@ import SearchBar from "../SearchBar/SearchBar";
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeLink, setActiveLink] = useState("/");
+  const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
   let { isAuthenticated, userRole } = useSelector((state) => state.auth);
 
-  let navLinks = [
-    { text: "Home", path: "/" },
-    { text: "Shop", path: "/shop" },
-    { text: "About", path: "/about" },
-    !isAuthenticated && { text: "Auth", path: "/auth" },
-    isAuthenticated && { text: "Profile", path: "/profile" },
-    isAuthenticated &&
-      userRole === "admin" && { text: "Dashboard", path: "/dashboard" },
-  ].filter(Boolean); // remove false/null entries
+  // Handle scroll effect for navbar
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     setActiveLink(location.pathname);
   }, [location.pathname]);
 
+  let navLinks = [
+    { text: "Home", path: "/", icon: "🏠" },
+    { text: "Shop", path: "/shop", icon: "🛒" },
+    { text: "About", path: "/about", icon: "ℹ️" },
+    !isAuthenticated && { text: "Login", path: "/auth", icon: "🔐" },
+    isAuthenticated && { text: "Profile", path: "/profile", icon: "👤" },
+    isAuthenticated &&
+      userRole === "admin" && {
+        text: "Dashboard",
+        path: "/dashboard",
+        icon: "📊",
+      },
+  ].filter(Boolean);
+
   const handleLinkClick = (path) => {
     setActiveLink(path);
     setIsMenuOpen(false);
+    navigate(path);
   };
 
   return (
     <>
-      <nav className="bg-dark-blue shadow-lg relative z-50">
+      <nav
+        className={`fixed top-0 w-full transition-all duration-300 z-50 ${
+          isScrolled ? "bg-dark-blue shadow-sm py-2" : "bg-dark-blue py-4"
+        }`}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between">
             {/* Logo */}
             <div className="flex-shrink-0">
               <span
                 onClick={() => navigate("/")}
-                className="text-white font-bold text-xl hover:text-accent-orange transition-colors duration-300 cursor-pointer"
+                className="text-2xl font-bold text-white cursor-pointer flex items-center"
               >
                 E-Commerce
               </span>
             </div>
 
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center space-x-1">
+              {navLinks.map((link, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleLinkClick(link.path)}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 flex cursor-pointer items-center ${
+                    activeLink === link.path
+                      ? "text-dark-blue bg-accent-orange font-semibold"
+                      : "text-white hover:text-accent-orange hover:bg-light-gray"
+                  }`}
+                >
+                  <span className="mr-2 text-sm">{link.icon}</span>
+                  {link.text}
+                </button>
+              ))}
+            </div>
+
             {/* Search Bar - Desktop */}
-            <div className="hidden md:flex flex-1 max-w-lg mx-8">
+            <div className="hidden md:flex flex-1 max-w-md mx-8">
               <SearchBar />
             </div>
 
-            {/* Desktop Navigation */}
-            <div className="hidden md:block">
-              <div className="ml-4 flex items-center space-x-2">
-                {navLinks.map((link, index) => (
-                  <button
-                    key={index}
-                    onClick={() => {
-                      handleLinkClick(link.path);
-                      navigate(link.path);
-                    }}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:bg-accent-orange hover:bg-opacity-20 cursor-pointer ${
-                      activeLink === link.path
-                        ? "text-accent-orange font-bold"
-                        : "text-light-gray hover:text-white"
-                    }`}
-                  >
-                    {link.text}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Mobile menu button */}
-            <div className="md:hidden flex items-center">
-              {/* Search Bar - Mobile (Icon only) */}
-              <div className="mr-4 md:hidde">
+            {/* Mobile menu button and search */}
+            <div className="md:hidden flex items-center space-x-3">
+              <div className="md:hidden">
                 <SearchBar isMobile={true} />
               </div>
-              
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="text-light-gray hover:text-white focus:outline-none transition-all duration-300"
+                className="p-2 rounded-lg text-white hover:bg-light-gray transition-colors duration-200 focus:outline-none"
+                aria-label="Toggle menu"
               >
-                <svg
-                  className={`h-6 w-6 transition-transform duration-300 ${
-                    isMenuOpen ? "rotate-90" : ""
-                  }`}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  {isMenuOpen ? (
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  ) : (
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 6h16M4 12h16M4 18h16"
-                    />
-                  )}
-                </svg>
+                <div className="w-6 h-6 flex flex-col justify-center items-center">
+                  <span
+                    className={`block h-0.5 w-6 bg-current transform transition duration-300 ease-in-out ${
+                      isMenuOpen
+                        ? "rotate-45 translate-y-1.5"
+                        : "-translate-y-1"
+                    }`}
+                  ></span>
+                  <span
+                    className={`block h-0.5 w-6 bg-current transition-all duration-300 ease-in-out ${
+                      isMenuOpen ? "opacity-0" : "opacity-100 mt-1"
+                    }`}
+                  ></span>
+                  <span
+                    className={`block h-0.5 w-6 bg-current transform transition duration-300 ease-in-out ${
+                      isMenuOpen
+                        ? "-rotate-45 -translate-y-1.5"
+                        : "translate-y-1 mt-1"
+                    }`}
+                  ></span>
+                </div>
               </button>
             </div>
           </div>
         </div>
       </nav>
 
-      {/* Mobile Navigation Overlay */}
-      <div
-        className={`fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300 md:hidden ${
-          isMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
-        onClick={() => setIsMenuOpen(false)}
-      />
-
       {/* Mobile Navigation Menu */}
       <div
-        className={`fixed top-0 right-0 h-full max-w-full w-64 bg-dark-blue shadow-2xl z-50 transform transition-transform duration-300 ease-in-out md:hidden ${
+        className={`fixed inset-0 z-40 transform transition-transform duration-300 ease-in-out md:hidden ${
           isMenuOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <div className="flex flex-col h-full">
-          {/* Mobile menu header */}
-          <div className="flex items-center justify-between p-4 border-b border-accent-orange border-opacity-30">
-            <span className="text-white font-bold text-lg">Menu</span>
-            <button
-              onClick={() => setIsMenuOpen(false)}
-              className="text-light-gray hover:text-white transition-colors duration-200"
-            >
-              <svg
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
+        {/* Backdrop */}
+        <div
+          className={`absolute inset-0 bg-black transition-opacity duration-300 ${
+            isMenuOpen ? "opacity-40" : "opacity-0"
+          }`}
+          onClick={() => setIsMenuOpen(false)}
+        />
 
-          {/* Search Bar - Mobile Expanded */}
-          <div className="px-4 py-3 border-b border-accent-orange border-opacity-20">
-            <SearchBar isExpanded={true} />
-          </div>
-
-          {/* Mobile menu items */}
-          <div className="flex-1 px-4 py-6 space-y-2">
-            {navLinks.map((link, index) => (
+        {/* Panel */}
+        <div className="absolute top-0 right-0 h-full w-80 bg-dark-blue shadow-xl">
+          <div className="flex flex-col h-full">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-light-gray">
+              <span className="text-xl font-semibold text-white">Menu</span>
               <button
-                key={index}
-                onClick={() => {
-                  handleLinkClick(link.path);
-                  navigate(link.path);
-                }}
-                className={`w-full text-left block px-4 py-3 rounded-lg text-base font-medium transition-all duration-300 ${
-                  activeLink === link.path
-                    ? "text-accent-orange font-bold bg-accent-orange bg-opacity-10"
-                    : "text-light-gray hover:text-white hover:bg-accent-orange hover:bg-opacity-10"
-                }`}
-                style={{
-                  transitionDelay: isMenuOpen ? `${index * 100}ms` : "0ms",
-                  transform: isMenuOpen
-                    ? `translateX(0) translateY(0)`
-                    : `translateX(30px) translateY(-10px)`,
-                  opacity: isMenuOpen ? 1 : 0,
-                }}
+                onClick={() => setIsMenuOpen(false)}
+                className="p-2 rounded-lg text-white hover:bg-light-gray transition-colors duration-200"
+                aria-label="Close menu"
               >
-                {link.text}
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
               </button>
-            ))}
-          </div>
+            </div>
 
-          {/* Footer */}
-          <div className="p-4 border-t border-accent-orange border-opacity-30">
-            <div className="text-center text-light-gray text-sm">
-              © 2024 E-Commerce
+            {/* SearchBar */}
+            <div className="px-6 py-5 border-b border-light-gray">
+              <SearchBar isExpanded={true} />
+            </div>
+
+            {/* Links */}
+            <div className="flex-1 px-2 py-6 space-y-1 overflow-y-auto">
+              {navLinks.map((link, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleLinkClick(link.path)}
+                  className={`w-full flex items-center px-4 py-4 rounded-xl text-base font-medium transition-all duration-300 ${
+                    activeLink === link.path
+                      ? "text-dark-blue bg-accent-orange font-semibold"
+                      : "text-white hover:text-accent-orange hover:bg-light-gray"
+                  }`}
+                  style={{
+                    transitionDelay: isMenuOpen ? `${index * 50}ms` : "0ms",
+                    opacity: isMenuOpen ? 1 : 0,
+                    transform: isMenuOpen
+                      ? "translateX(0)"
+                      : "translateX(20px)",
+                  }}
+                >
+                  <span className="mr-3 text-lg">{link.icon}</span>
+                  {link.text}
+                </button>
+              ))}
+            </div>
+
+            {/* Footer */}
+            <div className="p-6 border-t border-light-gray bg-dark-blue">
+              <div className="text-center text-light-gray text-sm">
+                © {new Date().getFullYear()} SwiftCart. All rights reserved.
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Spacer */}
+      <div className={`h-20 ${isScrolled ? "h-16" : "h-20"}`}></div>
     </>
   );
 };

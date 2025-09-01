@@ -112,7 +112,7 @@ exports.update = async (req, res) => {
     }
 
     // Define paths
-    const baseUploadPath = path.join(__dirname, "..", "uploads", "products");
+    const baseUploadPath = path.join("uploads", "products");
     const oldProductFolder = path.join(baseUploadPath, existingProduct.title);
     const newProductFolder = path.join(baseUploadPath, title);
 

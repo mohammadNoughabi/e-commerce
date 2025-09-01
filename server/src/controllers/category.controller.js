@@ -84,8 +84,6 @@ exports.update = async (req, res) => {
     if (req.file) {
       // Delete old image if a new one is uploaded
       const oldImagePath = path.join(
-        __dirname,
-        "..",
         "uploads",
         "categories",
         category.title,
@@ -102,16 +100,12 @@ exports.update = async (req, res) => {
 
       // Move new image from temporary location to category folder
       const tempImagePath = path.join(
-        __dirname,
-        "..",
         "uploads",
         "categories",
         req.file.filename
       );
 
       const newImagePath = path.join(
-        __dirname,
-        "..",
         "uploads",
         "categories",
         title || category.title, // Use new title if provided, else keep old

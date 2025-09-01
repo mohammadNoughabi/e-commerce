@@ -5,18 +5,23 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   ChatBubbleLeftRightIcon,
+  ArrowLeftIcon,
+  ShoppingBagIcon,
+  CheckIcon,
+  ShieldCheckIcon,
+  TruckIcon,
+  ArrowPathIcon,
 } from "@heroicons/react/24/outline";
 
 const ProductPage = () => {
   const apiBase = import.meta.env.VITE_API_BASE;
-  const { id } = useParams(); 
+  const { id } = useParams();
   const [category, setCategory] = useState(null);
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const relatedSliderRef = useRef(null);
-
-  console.log(id);
 
   const fetchData = async () => {
     try {
@@ -32,9 +37,7 @@ const ProductPage = () => {
       setProduct(productData);
       setCategory(categoryResponse.data.category);
       setRelatedProducts(
-        productResponse.data.relatedProducts.filter(
-          (item) => item._id !== id
-        )
+        productResponse.data.relatedProducts.filter((item) => item._id !== id)
       );
     } catch (error) {
       console.log(error);
@@ -49,7 +52,10 @@ const ProductPage = () => {
 
   const handleWhatsAppMessage = () => {
     if (!product) return;
-    const whatsappUrl = `https://wa.me/989124937456?text=Hi, I'm interested in ${product.title}`;
+    const message = `Hi, I'm interested in ${product.title} (${window.location.href})`;
+    const whatsappUrl = `https://wa.me/989124937456?text=${encodeURIComponent(
+      message
+    )}`;
     window.open(whatsappUrl, "_blank");
   };
 
@@ -90,7 +96,7 @@ const ProductPage = () => {
 
   if (!product) {
     return (
-      <div className="flex items-center justify-center h-64 text-dark-blue">
+      <div className="flex items-center justify-center min-h-screen text-dark-blue">
         <div className="animate-pulse text-lg">Loading product details...</div>
       </div>
     );
@@ -123,60 +129,80 @@ const ProductPage = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-4 md:p-6">
+    <div className="max-w-6xl mx-auto px-4 md:px-6 py-6">
       {/* Inject JSON-LD for SEO */}
       <script type="application/ld+json">
         {JSON.stringify(productJsonLd)}
       </script>
 
       {/* Breadcrumb */}
-      <nav className="text-sm breadcrumbs mb-6" aria-label="Breadcrumb">
-        <ul className="flex space-x-2 text-gray-600">
-          <li>
-            <Link to="/shop" className="hover:text-accent-orange">
-              Shop
-            </Link>
-          </li>
-          <li>
-            <Link
-              to={`/category/${category._id}`}
-              className="hover:text-accent-orange"
-            >
-              {category.title}
-            </Link>
-          </li>
-          <li>/</li>
-          <li className="text-dark-blue font-medium truncate max-w-xs">
+      <nav className="text-sm mb-8" aria-label="Breadcrumb">
+        <div className="flex items-center space-x-2 text-dark-blue/70">
+          <Link to="/" className="hover:text-accent-orange transition-colors">
+            Home
+          </Link>
+          <span>/</span>
+          <Link
+            to="/shop"
+            className="hover:text-accent-orange transition-colors"
+          >
+            Shop
+          </Link>
+          <span>/</span>
+          <Link
+            to={`/category/${category?._id}`}
+            className="hover:text-accent-orange transition-colors"
+          >
+            {category?.title || "Category"}
+          </Link>
+          <span>/</span>
+          <span className="text-dark-blue font-medium truncate max-w-xs">
             {product.title}
-          </li>
-        </ul>
+          </span>
+        </div>
       </nav>
 
+      {/* Back Button */}
+      <button
+        onClick={() => window.history.back()}
+        className="flex items-center text-dark-blue hover:text-accent-orange mb-6 transition-colors"
+      >
+        <ArrowLeftIcon className="w-4 h-4 mr-2" />
+        Back
+      </button>
+
       {/* Product Section */}
-      <article className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-white rounded-2xl shadow-md p-4 md:p-6 mb-12">
+      <article className="grid grid-cols-1 lg:grid-cols-2 gap-8 bg-white rounded-2xl shadow-sm p-6 mb-12 border border-light-gray">
         {/* Image Slider */}
         <div className="flex flex-col items-center">
           <div className="relative w-full max-w-md overflow-hidden rounded-xl group">
-            <div className="relative aspect-square">
+            <div className="relative aspect-square bg-light-gray rounded-xl">
               <img
                 src={`${apiBase}/uploads/products/${product.title}/${allImages[currentImageIndex]}`}
                 alt={product.title}
-                className="w-full h-full object-cover rounded-xl transition-opacity duration-300"
+                className={`w-full h-full object-cover rounded-xl transition-opacity duration-300 ${
+                  imageLoaded ? "opacity-100" : "opacity-0"
+                }`}
                 loading="eager"
+                onLoad={() => setImageLoaded(true)}
               />
+
+              {!imageLoaded && (
+                <div className="absolute inset-0 bg-light-gray animate-pulse rounded-xl"></div>
+              )}
 
               {allImages.length > 1 && (
                 <>
                   <button
                     onClick={prevImage}
-                    className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/90 p-2 rounded-full shadow-lg hover:bg-white transition opacity-0 group-hover:opacity-100"
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/90 p-2 rounded-full shadow-lg hover:bg-white transition opacity-0 group-hover:opacity-100"
                     aria-label="Previous image"
                   >
                     <ChevronLeftIcon className="w-5 h-5 text-dark-blue" />
                   </button>
                   <button
                     onClick={nextImage}
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/90 p-2 rounded-full shadow-lg hover:bg-white transition opacity-0 group-hover:opacity-100"
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/90 p-2 rounded-full shadow-lg hover:bg-white transition opacity-0 group-hover:opacity-100"
                     aria-label="Next image"
                   >
                     <ChevronRightIcon className="w-5 h-5 text-dark-blue" />
@@ -185,7 +211,7 @@ const ProductPage = () => {
               )}
 
               {allImages.length > 1 && (
-                <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-3 py-1 rounded-full text-sm font-medium">
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-dark-blue/80 text-white px-3 py-1 rounded-full text-sm font-medium">
                   {currentImageIndex + 1} / {allImages.length}
                 </div>
               )}
@@ -193,7 +219,7 @@ const ProductPage = () => {
           </div>
 
           {allImages.length > 1 && (
-            <div className="flex gap-3 mt-4 overflow-x-auto pb-2 w-full max-w-md">
+            <div className="flex gap-3 mt-6 overflow-x-auto pb-2 w-full max-w-md">
               {allImages.map((img, i) => (
                 <button
                   key={i}
@@ -201,9 +227,10 @@ const ProductPage = () => {
                   className={`flex-shrink-0 w-16 h-16 rounded-lg border-2 overflow-hidden transition-all ${
                     i === currentImageIndex
                       ? "border-accent-orange scale-105"
-                      : "border-gray-200 hover:border-gray-400"
+                      : "border-light-gray hover:border-dark-blue/30"
                   }`}
                   aria-label={`View image ${i + 1}`}
+                  aria-current={i === currentImageIndex ? "true" : "false"}
                 >
                   <img
                     src={`${apiBase}/uploads/products/${product.title}/${img}`}
@@ -220,47 +247,75 @@ const ProductPage = () => {
         {/* Product Details */}
         <div className="flex flex-col justify-between">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-dark-blue mb-2">
+            <h1 className="text-2xl md:text-3xl font-bold text-dark-blue mb-3">
               {product.title}
             </h1>
 
-            <div className="flex items-center text-sm text-gray-500 mb-4">
-              <span className="mr-3">
+            <div className="flex items-center text-sm text-dark-blue/60 mb-6">
+              <span className="mr-4 flex items-center">
+                <CheckIcon className="w-4 h-4 mr-1 text-accent-orange" />
                 SKU: {product._id.slice(-6).toUpperCase()}
               </span>
-              <span>•</span>
-              <span className="ml-3">In Stock</span>
+              <span className="flex items-center">
+                <CheckIcon className="w-4 h-4 mr-1 text-accent-orange" />
+                In Stock
+              </span>
             </div>
 
-            <div
-              className="text-base text-gray-700 mb-6 product-description text-justify"
-              dangerouslySetInnerHTML={{ __html: product.description }}
-            />
-          </div>
-
-          <div>
+            {/* Price */}
             <div className="flex items-center mb-6">
-              <p className="text-2xl md:text-3xl font-bold text-accent-orange">
+              <p className="text-3xl md:text-4xl font-bold text-accent-orange">
                 ${product.price}
               </p>
               {product.originalPrice &&
                 product.originalPrice > product.price && (
-                  <p className="ml-3 text-lg text-gray-500 line-through">
+                  <p className="ml-4 text-lg text-dark-blue/60 line-through">
                     ${product.originalPrice}
                   </p>
                 )}
             </div>
 
+            {/* Benefits */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+              <div className="flex items-center text-dark-blue/80">
+                <TruckIcon className="w-5 h-5 mr-2 text-accent-orange" />
+                <span className="text-sm">Free Shipping</span>
+              </div>
+              <div className="flex items-center text-dark-blue/80">
+                <ArrowPathIcon className="w-5 h-5 mr-2 text-accent-orange" />
+                <span className="text-sm">30-Day Returns</span>
+              </div>
+              <div className="flex items-center text-dark-blue/80">
+                <ShieldCheckIcon className="w-5 h-5 mr-2 text-accent-orange" />
+                <span className="text-sm">2-Year Warranty</span>
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className="mb-8">
+              <h3 className="text-lg font-semibold text-dark-blue mb-3">
+                Description
+              </h3>
+              <div
+                className="text-dark-blue/80 leading-relaxed product-description"
+                dangerouslySetInnerHTML={{ __html: product.description }}
+              />
+            </div>
+          </div>
+
+          {/* CTA Section */}
+          <div className="bg-light-gray/30 rounded-xl p-6">
             <button
               onClick={handleWhatsAppMessage}
-              className="w-full flex items-center justify-center gap-2 bg-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-700 transition shadow-md hover:shadow-lg"
+              className="w-full cursor-pointer flex items-center justify-center gap-3 bg-accent-orange text-dark-blue px-6 py-4 rounded-xl font-semibold hover:bg-accent-orange/90 transition-all shadow-md hover:shadow-lg mb-3"
             >
-              <ChatBubbleLeftRightIcon className="w-5 h-5" />
+              <ChatBubbleLeftRightIcon className="w-6 h-6" />
               Message on WhatsApp
             </button>
 
-            <p className="text-center text-sm text-gray-500 mt-3">
-              Typically replies within minutes
+            <p className="text-center text-sm text-dark-blue/60">
+              <ShieldCheckIcon className="w-4 h-4 inline mr-1" />
+              Secure transaction • Typically replies within minutes
             </p>
           </div>
         </div>
@@ -268,8 +323,8 @@ const ProductPage = () => {
 
       {/* Related Products */}
       {relatedProducts.length > 0 && (
-        <section className="mt-12" aria-labelledby="related-products-heading">
-          <div className="flex items-center justify-between mb-6">
+        <section className="mt-16" aria-labelledby="related-products-heading">
+          <div className="flex items-center justify-between mb-8">
             <h2
               id="related-products-heading"
               className="text-xl md:text-2xl font-bold text-dark-blue"
@@ -281,17 +336,17 @@ const ProductPage = () => {
               <div className="flex gap-2">
                 <button
                   onClick={() => scrollRelated("left")}
-                  className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition"
+                  className="p-2 rounded-full cursor-pointer bg-light-gray hover:bg-dark-blue/10 transition"
                   aria-label="Scroll related products left"
                 >
-                  <ChevronLeftIcon className="w-5 h-5" />
+                  <ChevronLeftIcon className="w-5 h-5 text-dark-blue" />
                 </button>
                 <button
                   onClick={() => scrollRelated("right")}
-                  className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition"
+                  className="p-2 rounded-full bg-light-gray cursor-pointer hover:bg-dark-blue/10 transition"
                   aria-label="Scroll related products right"
                 >
-                  <ChevronRightIcon className="w-5 h-5" />
+                  <ChevronRightIcon className="w-5 h-5 text-dark-blue" />
                 </button>
               </div>
             )}
@@ -299,29 +354,36 @@ const ProductPage = () => {
 
           <div
             ref={relatedSliderRef}
-            className="flex gap-4 overflow-x-auto scrollbar-hide snap-x pb-6"
+            className="flex gap-6 overflow-x-auto scrollbar-hide pb-8"
             style={{ scrollBehavior: "smooth" }}
           >
             {relatedProducts.map((rp) => (
               <Link
                 key={rp._id}
                 to={`/product/${rp._id}`}
-                className="flex-shrink-0 w-48 sm:w-56 md:w-64 bg-white shadow rounded-xl overflow-hidden border border-gray-100 hover:shadow-lg transition snap-start"
+                className="flex-shrink-0 w-64 bg-white shadow-sm rounded-xl overflow-hidden border border-light-gray hover:shadow-md transition-all hover:border-accent-orange/30"
                 aria-label={`View ${rp.title}`}
               >
-                <div className="aspect-square overflow-hidden">
+                <div className="aspect-square overflow-hidden bg-light-gray">
                   <img
-                    src={`${apiBase}/uploads/products/${rp._id}/${rp.image}`}
+                    src={`${apiBase}/uploads/products/${rp.title}/${rp.image}`}
                     alt={rp.title}
                     className="w-full h-full object-cover hover:scale-105 transition duration-300"
                     loading="lazy"
                   />
                 </div>
                 <div className="p-4">
-                  <h3 className="text-base font-semibold text-dark-blue line-clamp-2 h-12 mb-2">
+                  <h3 className="text-base font-semibold text-dark-blue line-clamp-2 mb-2">
                     {rp.title}
                   </h3>
-                  <p className="text-accent-orange font-bold">${rp.price}</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-accent-orange font-bold text-lg">
+                      ${rp.price}
+                    </p>
+                    <span className="text-dark-blue/60 text-sm">
+                      View Details
+                    </span>
+                  </div>
                 </div>
               </Link>
             ))}

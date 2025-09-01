@@ -10,7 +10,6 @@ exports.readAll = async (req, res) => {
 };
 
 exports.read = async (req, res) => {
-  console.log(req.params);
   try {
     const user = await User.findById(req.params.id);
     if (!user) {

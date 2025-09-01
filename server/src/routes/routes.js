@@ -3,7 +3,6 @@ const express = require("express");
 const authRoutes = require("./auth.routes");
 const userRoutes = require("./user.routes");
 const categoryRoutes = require("./category.routes");
-const blogRoutes = require("./blog.routes");
 const productRoutes = require("./product.routes");
 const searchRoutes = require("./search.routes");
 
@@ -15,7 +14,6 @@ routes.get("/", (req, res) => {
 
 routes.use("/auth", authRoutes);
 routes.use("/user", userRoutes);
-routes.use("/blog", blogRoutes);
 routes.use("/category", categoryRoutes);
 routes.use("/product", productRoutes);
 routes.use("/search", searchRoutes);

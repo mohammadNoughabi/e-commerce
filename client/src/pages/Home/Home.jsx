@@ -2,139 +2,130 @@ import { useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import Slider from "../../components/Slider/Slider";
+import Features from "../../components/Features/Features";
+import FAQ from "../../components/FAQ/FAQ";
 
 const Home = () => {
   const navigate = useNavigate();
   const products = useSelector((state) => state.product.products) || [];
-  const latestProducts = products.slice(-6).reverse();
-
-  const FeatureCard = ({ icon, title, description }) => (
-    <div className="bg-white p-6 rounded-xl shadow-md text-center hover:shadow-xl transition-all duration-300 flex flex-col items-center">
-      <div className="text-accent-orange text-4xl sm:text-5xl mb-4">{icon}</div>
-      <h3 className="text-dark-blue font-semibold text-lg sm:text-xl mb-2">
-        {title}
-      </h3>
-      <p className="text-gray-700 text-sm sm:text-base">{description}</p>
-    </div>
-  );
-
-  const Accordion = ({ title, content }) => {
-    const [isOpen, setIsOpen] = useState(false);
-
-    return (
-      <div className="border border-light-gray rounded-lg overflow-hidden">
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="w-full px-3 sm:px-4 py-3 bg-light-gray text-dark-blue font-semibold text-left flex justify-between items-center hover:bg-gray-200 transition-colors"
-        >
-          {title}
-          <span
-            className={`transform transition-transform ${
-              isOpen ? "rotate-180" : ""
-            }`}
-          >
-            ▼
-          </span>
-        </button>
-        <div
-          className={`overflow-hidden transition-all duration-300 ${
-            isOpen ? "max-h-40 px-3 sm:px-4 py-3" : "max-h-0"
-          } bg-white text-gray-700`}
-        >
-          {content}
-        </div>
-      </div>
-    );
-  };
+  const latestProducts = products.slice(-8).reverse();
 
   return (
-    <div className="flex flex-col space-y-16 overflow-x-hidden">
+    <div className="flex flex-col space-y-20 overflow-x-hidden">
       {/* Hero Section */}
-      <section
-        className="relative h-[60vh] md:h-[70vh] flex items-center justify-center text-center"
-        style={{
-          backgroundImage:
-            "url('https://source.unsplash.com/1920x800/?shopping,ecommerce')",
-        }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/40"></div>
-        <div className="relative z-10 max-w-3xl mx-auto px-4">
-          <h1 className="text-white text-3xl sm:text-4xl md:text-6xl font-bold mb-4 leading-tight">
-            Discover Amazing Products
+      <section className="relative h-screen max-h-[800px] flex items-center justify-center text-center bg-dark-blue">
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-20"
+          style={{
+            backgroundImage:
+              "url('https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1770&q=80')",
+          }}
+        ></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-dark-blue/70 to-dark-blue/90"></div>
+
+        <div className="relative z-10 max-w-4xl mx-auto px-6">
+          <div className="mb-6">
+            <span className="inline-block px-4 py-1.5 text-sm font-medium text-accent-orange bg-accent-orange/10 rounded-full mb-4 border border-accent-orange/20">
+              Welcome to our store
+            </span>
+          </div>
+
+          <h1 className="text-white text-4xl sm:text-5xl md:text-6xl font-bold mb-6 leading-tight">
+            Discover Amazing <br className="hidden sm:block" />
+            <span className="text-accent-orange">Products</span>
           </h1>
-          <p className="text-gray-200 text-base sm:text-lg md:text-xl mb-6 sm:mb-8">
-            Quality, variety, and unbeatable prices all in one place.
+
+          <p className="text-light-gray text-lg sm:text-xl mb-8 max-w-2xl mx-auto leading-relaxed">
+            Quality, variety, and unbeatable prices all in one place. Shop the
+            latest trends with confidence.
           </p>
-          <button
-            onClick={() => navigate("/shop")}
-            className="bg-accent-orange text-dark-blue px-6 sm:px-8 md:px-10 py-3 sm:py-3 md:py-4 rounded-lg font-semibold text-base sm:text-lg md:text-lg hover:bg-orange-600 transition-all duration-300 transform hover:scale-105 shadow-md"
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button
+              onClick={() => navigate("/shop")}
+              className="px-8 py-4 bg-accent-orange cursor-pointer text-dark-blue rounded-xl font-semibold text-base hover:bg-accent-orange/90 transition-all duration-300 shadow-lg hover:shadow-xl"
+            >
+              Shop Now
+            </button>
+          </div>
+        </div>
+
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6 text-accent-orange"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
           >
-            Shop Now
-          </button>
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 14l-7 7m0 0l-7-7m7 7V3"
+            />
+          </svg>
         </div>
       </section>
 
       {/* Latest Products Slider */}
       {latestProducts.length > 0 && (
-        <section className="container mx-auto">
-          <h2 className="text-dark-blue text-2xl sm:text-3xl font-bold mb-8 text-center">
-            Latest Arrivals
-          </h2>
+        <section className="container mx-auto px-6">
+          <div className="text-center mb-12">
+            <h2 className="text-dark-blue text-3xl font-bold mb-4">
+              New Arrivals
+            </h2>
+            <p className="text-dark-blue/80 max-w-2xl mx-auto">
+              Discover our latest products and find your next favorite item
+            </p>
+          </div>
           <Slider items={latestProducts} />
+          <div className="text-center mt-10">
+            <button
+              onClick={() => navigate("/shop")}
+              className="inline-flex items-center cursor-pointer text-accent-orange font-medium hover:text-accent-orange/80 transition-colors"
+            >
+              View all products
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 ml-2"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </button>
+          </div>
         </section>
       )}
 
       {/* Features Section */}
-      <section className="bg-light-gray py-12 sm:py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-dark-blue text-2xl sm:text-3xl font-bold mb-10 text-center">
-            Why Choose Us?
-          </h2>
+      <Features />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-            <FeatureCard
-              icon="⚡"
-              title="Fast Delivery"
-              description="Get your orders delivered in record time with our efficient logistics."
-            />
-            <FeatureCard
-              icon="🔒"
-              title="Secure Payments"
-              description="Shop with confidence using our safe and reliable payment gateways."
-            />
-            <FeatureCard
-              icon="🛍️"
-              title="Wide Selection"
-              description="Choose from thousands of products across various categories."
-            />
-          </div>
+      {/* Newsletter Section */}
+      {/* <section className="container mx-auto px-6 py-12 bg-dark-blue rounded-2xl text-center max-w-5xl">
+        <h2 className="text-white text-2xl font-bold mb-4">Stay Updated</h2>
+        <p className="text-light-gray mb-6 max-w-md mx-auto">
+          Subscribe to our newsletter for exclusive deals and new product announcements
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+          <input 
+            type="email" 
+            placeholder="Your email address"
+            className="flex-1 px-4 py-3 rounded-lg border-0 focus:ring-2 focus:ring-accent-orange"
+          />
+          <button className="px-6 py-3 bg-accent-orange text-dark-blue font-semibold rounded-lg hover:bg-accent-orange/90 transition-colors">
+            Subscribe
+          </button>
         </div>
-      </section>
+      </section> */}
 
       {/* FAQ Section */}
-      <section className="container mx-auto py-12 sm:py-16">
-        <h2 className="text-dark-blue text-2xl sm:text-3xl font-bold mb-8 text-center">
-          Frequently Asked Questions
-        </h2>
-        <div className="space-y-4">
-          <Accordion
-            title="What payment methods do you accept?"
-            content="We accept major credit cards, PayPal, and bank transfers."
-          />
-          <Accordion
-            title="How long does shipping take?"
-            content="Standard shipping takes 3-5 business days, while express shipping is available."
-          />
-          <Accordion
-            title="What is your return policy?"
-            content="We offer a 30-day return policy for most items. See our returns page for details."
-          />
-          <Accordion
-            title="Do you ship internationally?"
-            content="Yes, we ship worldwide to over 100 countries."
-          />
-        </div>
-      </section>
+      <FAQ />
     </div>
   );
 };

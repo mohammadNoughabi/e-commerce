@@ -6,13 +6,15 @@ import { openModal } from "../../store/Modal/modalSlice";
 import { addProduct } from "../../store/product/productSlice";
 
 const ProductCreator = () => {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [price, setPrice] = useState("");
-  const [stock , setStock] = useState(null);
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    price: "",
+    stock: "",
+    categoryId: ""
+  });
   const [image, setImage] = useState(null);
   const [gallery, setGallery] = useState([]);
-  const [categoryId, setCategoryId] = useState("");
   const [categories, setCategories] = useState([]);
   const [errors, setErrors] = useState({});
 
@@ -31,49 +33,76 @@ const ProductCreator = () => {
     fetchCategories();
   }, []);
 
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ""
+      }));
+    }
+  };
+
   const validateForm = () => {
     const newErrors = {};
-    if (!title.trim()) newErrors.title = "Title is required";
+    if (!formData.title.trim()) newErrors.title = "Title is required";
     if (!image) newErrors.image = "Image is required";
-    if (!price) newErrors.price = "Price is required";
-    if (Number(stock) < 0) newErrors.stock = "Stock can not be less than 0"
-    if (!description.trim()) newErrors.description = "Description is required";
+    if (!formData.price) newErrors.price = "Price is required";
+    if (Number(formData.stock) < 0) newErrors.stock = "Stock can not be less than 0";
+    if (!formData.description.trim()) newErrors.description = "Description is required";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const resetForm = () => {
+    setFormData({
+      title: "",
+      description: "",
+      price: "",
+      stock: "",
+      categoryId: ""
+    });
+    setImage(null);
+    setGallery([]);
+    setErrors({});
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
 
-    let formData = new FormData();
-    formData.append("title", title);
-    formData.append("description", description);
-    formData.append("price", price);
-    formData.append("stock" , stock);
-    formData.append("image", image);
-    if (categoryId) formData.append("categoryId", categoryId);
+    let submitData = new FormData();
+    submitData.append("title", formData.title);
+    submitData.append("description", formData.description);
+    submitData.append("price", formData.price);
+    submitData.append("stock", formData.stock);
+    submitData.append("image", image);
+    if (formData.categoryId) submitData.append("categoryId", formData.categoryId);
 
     gallery.forEach((file) => {
-      formData.append("gallery", file);
+      submitData.append("gallery", file);
     });
 
     try {
-      const res = await api.post("/api/product", formData, {
+      const res = await api.post("/api/product", submitData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
       dispatch(addProduct(res.data.newProduct));
       dispatch(openModal({ message: "Product created successfully!" }));
-
-      setTitle("");
-      setDescription("");
-      setPrice("");
-      setStock(null);
-      setImage(null);
-      setGallery([]);
-      setCategoryId("");
+      
+      // Reset form and reload the page after a short delay
+      resetForm();
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (err) {
       console.error("Error creating product", err);
       dispatch(openModal({ message: "Failed to create product" }));
@@ -88,7 +117,7 @@ const ProductCreator = () => {
         return;
       }
       setImage(file);
-      setErrors({ ...errors, image: null });
+      setErrors({ ...errors, image: "" });
     }
   };
 
@@ -100,7 +129,11 @@ const ProductCreator = () => {
       return;
     }
     setGallery(files);
-    setErrors({ ...errors, gallery: null });
+    setErrors({ ...errors, gallery: "" });
+  };
+
+  const removeGalleryImage = (index) => {
+    setGallery(prev => prev.filter((_, i) => i !== index));
   };
 
   return (
@@ -114,12 +147,13 @@ const ProductCreator = () => {
           <label className="mb-1 text-dark-blue font-semibold">Title</label>
           <input
             type="text"
+            name="title"
             placeholder="Ex. Shoe"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            value={formData.title}
+            onChange={handleInputChange}
             className="border border-dark-blue rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-accent-orange"
           />
-          {errors.title && <p className="text-red-500">{errors.title}</p>}
+          {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
         </div>
 
         {/* Description */}
@@ -127,9 +161,12 @@ const ProductCreator = () => {
           <label className="mb-1 text-dark-blue font-semibold">
             Description
           </label>
-          <Editor value={description} onChange={setDescription} />
+          <Editor 
+            value={formData.description} 
+            onChange={(value) => setFormData(prev => ({...prev, description: value}))} 
+          />
           {errors.description && (
-            <p className="text-red-500">{errors.description}</p>
+            <p className="text-red-500 text-sm mt-1">{errors.description}</p>
           )}
         </div>
 
@@ -137,34 +174,37 @@ const ProductCreator = () => {
         <div className="flex flex-col">
           <label className="mb-1 text-dark-blue font-semibold">Price</label>
           <input
-            type="text"
-            placeholder="Ex. 1200$"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
+            type="number"
+            name="price"
+            placeholder="Ex. 1200"
+            value={formData.price}
+            onChange={handleInputChange}
             className="border border-dark-blue rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-accent-orange"
           />
-          {errors.price && <p className="text-red-500">{errors.price}</p>}
+          {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price}</p>}
         </div>
 
-        {/* stock */}
-         <div className="flex flex-col">
+        {/* Stock */}
+        <div className="flex flex-col">
           <label className="mb-1 text-dark-blue font-semibold">Stock</label>
           <input
-            type="text"
+            type="number"
+            name="stock"
             placeholder="Ex. 500"
-            value={stock}
-            onChange={(e) => setStock(e.target.value)}
+            value={formData.stock}
+            onChange={handleInputChange}
             className="border border-dark-blue rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-accent-orange"
           />
-          {errors.price && <p className="text-red-500">{errors.stock}</p>}
+          {errors.stock && <p className="text-red-500 text-sm mt-1">{errors.stock}</p>}
         </div>
 
         {/* Category */}
         <div className="flex flex-col">
           <label className="mb-1 text-dark-blue font-semibold">Category</label>
           <select
-            value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
+            name="categoryId"
+            value={formData.categoryId}
+            onChange={handleInputChange}
             className="border border-dark-blue rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-accent-orange"
           >
             <option value="">-- Select category --</option>
@@ -194,11 +234,12 @@ const ProductCreator = () => {
                 className="hidden"
                 onChange={handleImageChange}
               />
+              {image && <span className="text-sm text-dark-blue">{image.name}</span>}
             </div>
-            {errors.image && <p className="text-red-500">{errors.image}</p>}
+            {errors.image && <p className="text-red-500 text-sm mt-1">{errors.image}</p>}
           </label>
 
-          {/* ✅ Preview for single image */}
+          {/* Preview for single image */}
           {image && (
             <div className="mt-3">
               <img
@@ -229,11 +270,12 @@ const ProductCreator = () => {
                 className="hidden"
                 onChange={handleGalleryChange}
               />
+              {gallery.length > 0 && <span className="text-sm text-dark-blue">{gallery.length} files selected</span>}
             </div>
-            {errors.gallery && <p className="text-red-500">{errors.gallery}</p>}
+            {errors.gallery && <p className="text-red-500 text-sm mt-1">{errors.gallery}</p>}
           </label>
 
-          {/* ✅ Previews for gallery */}
+          {/* Previews for gallery */}
           {gallery.length > 0 && (
             <div className="mt-3 grid grid-cols-3 gap-3">
               {gallery.map((file, index) => (
@@ -248,9 +290,7 @@ const ProductCreator = () => {
                   />
                   <button
                     type="button"
-                    onClick={() =>
-                      setGallery((prev) => prev.filter((_, i) => i !== index))
-                    }
+                    onClick={() => removeGalleryImage(index)}
                     className="absolute top-1 right-1 bg-red-500 text-white text-xs px-2 py-1 rounded opacity-80 hover:opacity-100"
                   >
                     ✕

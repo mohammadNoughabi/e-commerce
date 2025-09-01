@@ -1,7 +1,7 @@
 import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet";
-import { ArrowRight, ShoppingBag } from "lucide-react";
+import { ArrowRight, ShoppingBag, Home } from "lucide-react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, Autoplay } from "swiper/modules";
 
@@ -11,10 +11,11 @@ import "swiper/css/navigation";
 import "swiper/css/pagination";
 
 const Shop = () => {
-  const categories = useSelector((state) => state.category?.categories || []);
+  let categories = useSelector((state) => state.category?.categories || []);
   const products = useSelector((state) => state.product?.products || []);
   const apiBase = import.meta.env.VITE_API_BASE;
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Group products by category
   const productsByCategory = {};
@@ -24,7 +25,11 @@ const Shop = () => {
     );
   });
 
-  // JSON-LD Structured Data
+  categories = categories.filter(
+    (category) => productsByCategory[category._id]?.length > 0
+  );
+
+  // JSON-LD Structured Data for Categories & Products
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
@@ -37,6 +42,21 @@ const Shop = () => {
       description: cat.description,
       url: `/category/${cat._id}`,
       image: `${apiBase}/uploads/categories/${cat.title}/${cat.image}`,
+      hasPart: productsByCategory[cat._id]?.map((product) => ({
+        "@type": "Product",
+        name: product.title,
+        image: `${apiBase}/uploads/products/${product.title}/${product.image}`,
+        description: product.description || `${product.title} product`,
+        offers: {
+          "@type": "Offer",
+          price: product.price,
+          priceCurrency: "USD",
+          availability:
+            product.stock > 0
+              ? "http://schema.org/InStock"
+              : "http://schema.org/OutOfStock",
+        },
+      })),
     })),
   };
 
@@ -49,10 +69,20 @@ const Shop = () => {
           name="description"
           content="Browse our shop categories including electronics, fashion, accessories, and more. Discover products tailored to your needs."
         />
+        <link rel="canonical" href={`https://mystore.com${location.pathname}`} />
         <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
       </Helmet>
 
       <section className="max-w-7xl mx-auto">
+        {/* Breadcrumbs */}
+        <nav className="flex items-center gap-2 text-sm text-gray-600 mb-8 overflow-x-auto whitespace-nowrap scrollbar-hide">
+          <Link to="/" className="flex items-center gap-1 hover:text-gray-900">
+            <Home className="w-4 h-4" /> Home
+          </Link>
+          <span>/</span>
+          <span className="text-gray-800 font-medium">Shop</span>
+        </nav>
+
         {/* Hero Section */}
         <div className="text-center mb-16">
           <div className="flex items-center justify-center gap-3 mb-6">
@@ -60,12 +90,12 @@ const Shop = () => {
               <ShoppingBag className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-dark-blue tracking-tight">
-              Shop Categories
+              Explore Our Products
             </h1>
           </div>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Discover our curated collection of products across various categories. 
-            Find exactly what you're looking for with ease.
+            Discover our curated collection of products across various
+            categories. Find exactly what you're looking for with ease.
           </p>
         </div>
 
@@ -84,22 +114,25 @@ const Shop = () => {
           </div>
         ) : (
           /* Categories with Product Sliders */
-          <div className="space-y-16">
+          <div className="space-y-12">
             {categories.map((cat) => (
-              <div 
-                key={cat._id} 
-                className="bg-white rounded-2xl p-6 lg:p-8 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow duration-300"
+              <div
+                key={cat._id}
+                className="bg-white rounded-3xl p-6 lg:p-8 shadow-sm hover:shadow-md transition-all duration-300 border border-gray-50"
               >
                 {/* Category Header */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
-                  <div>
-                    <h2 className="text-2xl lg:text-3xl font-bold text-dark-blue mb-2">
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-2xl lg:text-3xl font-semibold text-gray-900 mb-2 tracking-tight">
                       {cat.title}
                     </h2>
+                    <p className="text-gray-500 text-sm lg:text-base max-w-2xl">
+                      Discover our curated collection of {cat.title.toLowerCase()} products
+                    </p>
                   </div>
                   <button
                     onClick={() => navigate(`/category/${cat._id}`)}
-                    className="flex items-center gap-2 px-6 py-3 bg-accent-orange text-white rounded-full hover:bg-dark-blue transition-all duration-300 hover:scale-105 shadow-md hover:shadow-lg"
+                    className="flex cursor-pointer items-center gap-2 px-5 py-2.5 bg-white text-gray-700 rounded-full hover:bg-gray-50 transition-all duration-300 border border-gray-200 hover:border-gray-300 shadow-xs hover:shadow-sm font-medium text-sm whitespace-nowrap"
                   >
                     View All
                     <ArrowRight className="w-4 h-4" />
@@ -107,106 +140,103 @@ const Shop = () => {
                 </div>
 
                 {/* Products Slider */}
-                {productsByCategory[cat._id]?.length > 0 ? (
+                {productsByCategory[cat._id]?.length > 0 && (
                   <div className="relative">
                     <Swiper
                       modules={[Navigation, Pagination, Autoplay]}
-                      spaceBetween={24}
+                      spaceBetween={20}
                       slidesPerView={1}
                       loop={true}
                       autoplay={{
-                        delay: 4000,
+                        delay: 4500,
                         disableOnInteraction: false,
                         pauseOnMouseEnter: true,
                       }}
                       pagination={{
                         clickable: true,
-                        el: '.swiper-pagination',
-                        bulletClass: 'swiper-pagination-bullet',
-                        bulletActiveClass: 'swiper-pagination-bullet-active bg-accent-orange',
+                        el: ".swiper-pagination",
+                        bulletClass: "swiper-pagination-bullet !bg-gray-300",
+                        bulletActiveClass:
+                          "swiper-pagination-bullet-active !bg-gray-700",
                       }}
                       navigation={{
-                        nextEl: '.swiper-button-next',
-                        prevEl: '.swiper-button-prev',
+                        nextEl: ".swiper-button-next",
+                        prevEl: ".swiper-button-prev",
                       }}
                       breakpoints={{
-                        480: {
-                          slidesPerView: 1,
-                        },
-                        640: {
-                          slidesPerView: 2,
-                        },
-                        768: {
-                          slidesPerView: 3,
-                        },
-                        1024: {
-                          slidesPerView: 4,
-                        },
-                        1280: {
-                          slidesPerView: 5,
-                        },
+                        480: { slidesPerView: 1 },
+                        640: { slidesPerView: 2 },
+                        768: { slidesPerView: 3 },
+                        1024: { slidesPerView: 4 },
+                        1280: { slidesPerView: 5 },
                       }}
-                      className="pb-12"
+                      className="pb-10"
                     >
                       {productsByCategory[cat._id].map((product) => (
                         <SwiperSlide key={product._id}>
                           <div
-                            className="group bg-white rounded-xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 cursor-pointer border border-gray-100 hover:border-accent-orange/20"
+                            className="group bg-white mb-3 rounded-xl overflow-hidden shadow-xs hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100"
                             onClick={() => navigate(`/product/${product._id}`)}
                           >
-                            <div className="relative h-56 overflow-hidden">
+                            <div className="relative h-56 overflow-hidden bg-gray-50">
                               <img
                                 src={`${apiBase}/uploads/products/${
                                   product.title
                                 }/${product.image || "default.jpg"}`}
                                 alt={product.title}
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                loading="lazy"
                               />
-                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300" />
-                            </div>
-                            <div className="p-5">
-                              <h3 className="font-semibold text-dark-blue text-lg mb-2 line-clamp-2 group-hover:text-accent-orange transition-colors duration-200">
-                                {product.title}
-                              </h3>
-                              <div className="flex items-center justify-between">
-                                <span className="text-2xl font-bold text-accent-orange">
-                                  ${product.price}
-                                </span>
+                              <div className="absolute top-3 right-3">
                                 {product.stock > 0 ? (
-                                  <span className="text-sm bg-green-100 text-green-800 px-3 py-1 rounded-full">
+                                  <span className="text-xs bg-white text-green-700 px-2 py-1.5 rounded-full shadow-sm font-medium">
                                     In Stock
                                   </span>
                                 ) : (
-                                  <span className="text-sm bg-red-100 text-red-800 px-3 py-1 rounded-full">
+                                  <span className="text-xs bg-white text-red-700 px-2 py-1.5 rounded-full shadow-sm font-medium">
                                     Out of Stock
                                   </span>
                                 )}
+                              </div>
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-all duration-300" />
+                            </div>
+                            <div className="p-4">
+                              <h3 className="font-medium text-gray-900 text-base mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors duration-200">
+                                {product.title}
+                              </h3>
+                              <div className="flex items-center justify-between mt-3">
+                                <span className="text-xl font-semibold text-gray-900">
+                                  ${product.price}
+                                </span>
+                                <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-white bg-gray-900 hover:bg-gray-800 p-2 rounded-full shadow-sm">
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="h-5 w-5"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M12 4v16m8-8H4"
+                                    />
+                                  </svg>
+                                </button>
                               </div>
                             </div>
                           </div>
                         </SwiperSlide>
                       ))}
                     </Swiper>
-                    
+
                     {/* Custom Navigation */}
-                    <div className="swiper-button-prev !text-accent-orange !w-12 !h-12 !bg-white !rounded-full !shadow-lg hover:!bg-dark-blue hover:!text-white transition-all duration-200 after:!text-xl"></div>
-                    <div className="swiper-button-next !text-accent-orange !w-12 !h-12 !bg-white !rounded-full !shadow-lg hover:!bg-dark-blue hover:!text-white transition-all duration-200 after:!text-xl"></div>
-                    
+                    <div className="swiper-button-prev !text-gray-700 !w-10 !h-10 !bg-white !rounded-full !shadow-sm hover:!bg-gray-50 hover:!shadow-md transition-all duration-200 after:!text-sm"></div>
+                    <div className="swiper-button-next !text-gray-700 !w-10 !h-10 !bg-white !rounded-full !shadow-sm hover:!bg-gray-50 hover:!shadow-md transition-all duration-200 after:!text-sm"></div>
+
                     {/* Custom Pagination */}
                     <div className="swiper-pagination !bottom-0"></div>
-                  </div>
-                ) : (
-                  <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
-                    <ShoppingBag className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500 text-lg">
-                      No products available in this category yet.
-                    </p>
-                    <button
-                      onClick={() => navigate(`/category/${cat._id}`)}
-                      className="mt-4 px-6 py-2 bg-gray-200 text-gray-600 rounded-full hover:bg-gray-300 transition-colors duration-200"
-                    >
-                      Check Back Later
-                    </button>
                   </div>
                 )}
               </div>
